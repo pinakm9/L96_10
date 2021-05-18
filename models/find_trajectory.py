@@ -15,8 +15,9 @@ import Lorenz96_alt
 import pandas as pd
 
 # set random initial point, load the L96_10 model
+np.random.seed(42)
 x0 = np.random.uniform(size=10)
-model, gen_path = Lorenz96_alt.get_model(x0=x0, size=10)
+model, gen_path = Lorenz96_alt.get_model(x0=x0, size=10, obs_gap=0.1)
 length = 500
 
 # find a trajectory on the attractor
