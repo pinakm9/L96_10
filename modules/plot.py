@@ -128,6 +128,7 @@ class SignalPlotter(object):
             plt.show()
         #else:
             #print("file_path was not specified. So the image file was not saved.")
+        
         return fig, ax
 
 

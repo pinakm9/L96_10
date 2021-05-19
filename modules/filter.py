@@ -9,6 +9,7 @@ import os
 import tables
 import copy
 import math
+import matplotlib.pyplot as plt
 
 class Model():
     """
@@ -182,7 +183,7 @@ class ParticleFilter(Filter):
         print('step: {}, sum of weights: {}'.format(self.current_time, self.weights.sum()))
         self.weights /= self.weights.sum()
         if np.isnan(self.weights[0]) or np.isinf(self.weights[0]):
-            self.status = 'faliure'
+            self.status = 'failure'
 
 
     def systematic_resample(self):
@@ -214,7 +215,7 @@ class ParticleFilter(Filter):
         return len(np.unique(indices))
 
 
-    def systematic_noisy_resample(self, noise=0.5):
+    def systematic_noisy_resample(self, noise=0.1):
         # make N subdivisions, and choose positions with a consistent random offset
         positions = (np.random.random() + np.arange(self.particle_count)) / self.particle_count
 
@@ -341,10 +342,10 @@ class ParticleFilter(Filter):
             if method is not None:
                 self.compute_trajectory(method = method)
             self.record(observation)
-            if hasattr(self, 'status') and self.status == 'faliure':
+            if self.status == 'failure':
                 break
             self.current_time += 1
-        if not hasattr(self, 'status'):
+        if self.status != 'failure':
             self.status = 'success'
         return self.status
 
@@ -368,8 +369,9 @@ class ParticleFilter(Filter):
         styles.append({'linestyle': 'dashed'})
         plt_fns.append('semilogy' if semilogy else 'plot')
         colors.append('grey')
-        plot.SignalPlotter(signals = signals).plot_signals(labels = labels, styles = styles, plt_fns = plt_fns, colors = colors,\
+        fig, _ = plot.SignalPlotter(signals = signals).plot_signals(labels = labels, styles = styles, plt_fns = plt_fns, colors = colors,\
                            show = show, file_path = self.folder + '/l2_error.png', title = title)
+        plt.close(fig)
 
         signals = [self.rmse]
         labels = ['rmse']
@@ -384,8 +386,9 @@ class ParticleFilter(Filter):
             plt_fns.append('scatter')
             colors.append('red')
       
-        plot.SignalPlotter(signals = signals).plot_signals(labels = labels, styles = styles, plt_fns = plt_fns, colors = colors,\
+        fig, _ = plot.SignalPlotter(signals = signals).plot_signals(labels = labels, styles = styles, plt_fns = plt_fns, colors = colors,\
                            show = show, file_path = self.folder + '/rmse.png', title = title)
+        plt.close(fig)
 
     @ut.timer
     def plot_ensembles(self, hidden_path, hidden_color = 'red', prior_mean_color = 'purple', posterior_mean_color = 'maroon',\
