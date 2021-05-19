@@ -87,17 +87,21 @@ class Filter():
             styles.append({'marker': 'x'})
             plt_fns.append('scatter')
             colors.append('blue')
-        plot.SignalPlotter(signals).plot_signals(labels = labels, styles = styles, plt_fns = plt_fns, colors = colors,\
+        fig, _ = plot.SignalPlotter(signals).plot_signals(labels = labels, styles = styles, plt_fns = plt_fns, colors = colors,\
                                                 coords_to_plot = coords_to_plot, show = show, file_path = file_path, title = title)
+        plt.close(fig)
+
 
     def plot_error(self, show = False, file_path = None, title = None, semilogy = False):
-        plot.SignalPlotter(signals = [abs(self.abs_error)]).plot_signals(labels = ['absolute error'], styles = [{'linestyle':'solid'}],\
+        fig, _ = plot.SignalPlotter(signals = [abs(self.abs_error)]).plot_signals(labels = ['absolute error'], styles = [{'linestyle':'solid'}],\
             plt_fns = ['semilogy' if semilogy else 'plot'], colors = ['black'], coords_to_plot = [0], show = show, file_path = file_path, title = title)
-        
-        file_path = file_path.split('/')[0] + '/rmse.png'
-        plot.SignalPlotter(signals = [abs(self.rmse)]).plot_signals(labels = ['rmse'], styles = [{'linestyle':'solid'}],\
-            plt_fns = ['plot'], colors = ['black'], coords_to_plot = [0], show = show, file_path = file_path, title = title)
+        plt.close(fig)
 
+
+        file_path = file_path.split('/')[0] + '/rmse.png'
+        fig, _ = plot.SignalPlotter(signals = [abs(self.rmse)]).plot_signals(labels = ['rmse'], styles = [{'linestyle':'solid'}],\
+            plt_fns = ['plot'], colors = ['black'], coords_to_plot = [0], show = show, file_path = file_path, title = title)
+        plt.close(fig)
 
 
 class ParticleFilter(Filter):
@@ -215,7 +219,7 @@ class ParticleFilter(Filter):
         return len(np.unique(indices))
 
 
-    def systematic_noisy_resample(self, noise=0.1):
+    def systematic_noisy_resample(self, noise=0.5):
         # make N subdivisions, and choose positions with a consistent random offset
         positions = (np.random.random() + np.arange(self.particle_count)) / self.particle_count
 

@@ -5,6 +5,6 @@
 "prior_cov": 0.5,
 "resampling_method": "systematic_noisy",
 "resampling_cov": 0.1,
-"resampling_threshold": 0.1,
+"resampling_threshold": 1.0,
 "shift": 2.0
 }

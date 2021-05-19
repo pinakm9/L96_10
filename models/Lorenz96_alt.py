@@ -37,13 +37,13 @@ def get_model(x0, size, prior_cov=1.0, obs_cov=0.1, shift=0.0, obs_gap=0.1):
         return y
 
 
-    def lorenz_96(x0, obs_gap=0.2):
-        return scipy.integrate.solve_ivp(lorenz96_f, [0.0, obs_gap], x0, method='RK45', t_eval=[obs_gap]).y.T[0]
+    def lorenz_96(x):
+        return scipy.integrate.solve_ivp(lorenz96_f, [0.0, obs_gap], x, method='RK45', t_eval=[obs_gap]).y.T[0]
 
     # create a deterministic Markov chain
     prior = sm.Simulation(algorithm = lambda *args: shift + np.random.multivariate_normal(x0, prior_cov*id))
     process_noise = sm.Simulation(algorithm = lambda *args: np.random.multivariate_normal(mu, eps*id))
-    func_h = lambda k, x, noise: lorenz_96(x, obs_gap) + noise
+    func_h = lambda k, x, noise: lorenz_96(x) + noise
     conditional_pdf_h = lambda k, x, past: scipy.stats.multivariate_normal.pdf(x, mean = func_h(k, past, zero), cov = eps*id)
 
     # define the observation model

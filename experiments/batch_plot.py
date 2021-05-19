@@ -11,10 +11,10 @@ import os
 import numpy as np
 # first 10 odd primes as random seeds
 seeds = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
-particle_count = 250
-id_ = 0
+particle_count = 1000
+id_ = 1
 dist_folder = 'dists'
-file_path = 'plots/test_{}.png'.format(particle_count)
+file_path = 'plots/test_{}.png'.format('all')
 
 # compute distances
 batch_plotter = be.AvgDistPlotter(dist_folder)

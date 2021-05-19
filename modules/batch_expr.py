@@ -99,13 +99,13 @@ class BatchDist:
             print('computing distance for step #{}'.format(t))
             ensemble_1 = np.array(getattr(file_1.root.particles, 'time_' + str(t)).read().tolist())
             ensemble_2 = np.array(getattr(file_2.root.particles, 'time_' + str(t)).read().tolist())
-            weights_1 = np.array(getattr(file_1.root.weights, 'time_' + str(t)).read().tolist())
-            weights_2 = np.array(getattr(file_2.root.weights, 'time_' + str(t)).read().tolist())
-            ensemble_1 = tf.convert_to_tensor(ensemble_1, dtype=tf.float64)
-            ensemble_2 = tf.convert_to_tensor(ensemble_2, dtype=tf.float64)
-            weights_1 = tf.convert_to_tensor(weights_1, dtype=tf.float64)
-            weights_2 = tf.convert_to_tensor(weights_2, dtype=tf.float64)
-            dist[t] = (ws.sinkhorn_div_tf(ensemble_1, ensemble_2, weights_1, weights_2,\
+            #weights_1 = np.array(getattr(file_1.root.weights, 'time_' + str(t)).read().tolist())
+            #weights_2 = np.array(getattr(file_2.root.weights, 'time_' + str(t)).read().tolist())
+            ensemble_1 = tf.convert_to_tensor(ensemble_1, dtype=tf.float32)
+            ensemble_2 = tf.convert_to_tensor(ensemble_2, dtype=tf.float32)
+            #weights_1 = tf.convert_to_tensor(weights_1, dtype=tf.float32)
+            #weights_2 = tf.convert_to_tensor(weights_2, dtype=tf.float32)
+            dist[t] = (ws.sinkhorn_div_tf(ensemble_1, ensemble_2,\
                        epsilon=epsilon, num_iters=num_iters, p=p).numpy())**(1./p)
 
         id_1 = config_id_1.split('_')[-1]
@@ -145,15 +145,17 @@ class AvgDistPlotter:
         self.colors = ['red', 'green', 'blue', 'orange', 'grey', 'purple']
 
     def plot(self, file_path):
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(111)
         for folder in os.listdir(self.dist_folder):
             for i, f in enumerate(os.listdir(self.dist_folder + '/' + folder)):
                 df = pd.read_csv(self.dist_folder + '/' + folder + '/' + f)
                 if self.particle_counts[folder] != self.max_particle_count:
-                    sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], color=self.colors[i], ci=95)
+                    sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], color=self.colors[i], ci='sd', ax=ax)
                 else:
-                    sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], color=self.colors[i], ci=95)
-                plt.show()
-        plt.savefig(file_path)
+                    sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], color=self.colors[i], ci='sd', ax=ax)
+                #plt.show()
+                plt.savefig(file_path)
 
 
 

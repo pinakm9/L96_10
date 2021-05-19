@@ -76,11 +76,11 @@ def sinkhorn_div_tf(x, y, alpha=None, beta=None, epsilon=0.01, num_iters=200, p=
     f, g = 0. * alpha, 0. * beta
     f_, iter = 1. * alpha, 0
     while tf.norm(f - f_, ord=1) / tf.norm(f_, ord=1) > 1e-3 and iter < num_iters:
-        f_ = f
+        f_ = 1.0 * f
         f = - epsilon * tf.reduce_logsumexp(log_beta + (g - c) / epsilon, axis=1)
         g = - epsilon * tf.reduce_logsumexp(log_alpha + (tf.expand_dims(f, 1) - c) / epsilon, axis=0)
         iter += 1
-    #print(iter)
+    print('iteration count = {}'.format(iter))
 
     OT_alpha_beta = tf.reduce_sum(f * alpha) + tf.reduce_sum(g * beta)
     
@@ -89,7 +89,7 @@ def sinkhorn_div_tf(x, y, alpha=None, beta=None, epsilon=0.01, num_iters=200, p=
     f_, iter = 1. * alpha, 0
     log_alpha = tf.squeeze(log_alpha)
     while tf.norm(f - f_, ord=1) / tf.norm(f_, ord=1) > 1e-3 and iter < num_iters:
-        f_ = f
+        f_ = 1.0 * f
         f = 0.5 * (f - epsilon * tf.reduce_logsumexp(log_alpha + (f - c) / epsilon, axis=1) )
         iter += 1
     #print(iter)
@@ -98,8 +98,11 @@ def sinkhorn_div_tf(x, y, alpha=None, beta=None, epsilon=0.01, num_iters=200, p=
     g = 0. * beta
     g_, iter = 1. * beta, 0
     while tf.norm(g - g_, ord=1) / tf.norm(g_, ord=1) > 1e-3 and iter < num_iters:
-        g_ = g
+        g_ = 1.0 * g
         g = 0.5 * (g - epsilon * tf.reduce_logsumexp(log_beta + (g - c) / epsilon, axis=1) )
         iter += 1
-    return tf_round(OT_alpha_beta - tf.reduce_sum(f * alpha) - tf.reduce_sum(g * beta), 5)
+    
+    d = tf_round(OT_alpha_beta - tf.reduce_sum(f * alpha) - tf.reduce_sum(g * beta), 5)
+    print(d**0.5)
+    return d#tf_round(OT_alpha_beta - tf.reduce_sum(f * alpha) - tf.reduce_sum(g * beta), 5)
 
