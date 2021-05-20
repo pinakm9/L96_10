@@ -11,12 +11,12 @@ import os
 import numpy as np
 # first 10 odd primes as random seeds
 seeds = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
-particle_count = 250
-id_ = 1
+particle_count = 1000
+id_ = 0
 config_folder = '../configs/{}_pc_{}'.format(id_, particle_count)
 results_folder = 'results/{}_pc_{}'.format(id_, particle_count)
 dist_folder = 'dists/{}_pc_{}'.format(id_, particle_count)
 
 # compute distances
-batch_dist = be.BatchDist(config_folder, seeds[:1], results_folder, dist_folder)
-batch_dist.run(epsilon=0.01, num_iters=2, p=2)
+batch_dist = be.BatchDist(config_folder, seeds, results_folder, dist_folder)
+batch_dist.run(gap=4, ev_time=400, epsilon=0.01, num_iters=200, p=2)

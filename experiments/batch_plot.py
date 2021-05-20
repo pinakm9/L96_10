@@ -13,8 +13,8 @@ import numpy as np
 seeds = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
 particle_count = 1000
 id_ = 1
-dist_folder = 'dists'
-file_path = 'plots/test_{}.png'.format('all')
+dist_folder = 'dists/{}'.format(id_)
+file_path = 'plots/dist_{}.png'.format(id_)
 
 # compute distances
 batch_plotter = be.AvgDistPlotter(dist_folder)
