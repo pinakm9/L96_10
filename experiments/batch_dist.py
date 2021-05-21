@@ -15,7 +15,7 @@ particle_count = 1000
 id_ = 0
 config_folder = '../configs/{}_pc_{}'.format(id_, particle_count)
 results_folder = 'results/{}_pc_{}'.format(id_, particle_count)
-dist_folder = 'dists/{}_pc_{}'.format(id_, particle_count)
+dist_folder = 'dists/{0}/{0}_pc_{1}'.format(id_, particle_count)
 
 # compute distances
 batch_dist = be.BatchDist(config_folder, seeds, results_folder, dist_folder)

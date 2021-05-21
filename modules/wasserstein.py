@@ -75,7 +75,8 @@ def sinkhorn_div_tf(x, y, alpha=None, beta=None, epsilon=0.01, num_iters=200, p=
 
     f, g = 0. * alpha, 0. * beta
     f_, iter = 1. * alpha, 0
-    while tf.norm(f - f_, ord=1) / tf.norm(f_, ord=1) > 1e-3 and iter < num_iters:
+    
+    while (tf.norm(f - f_, ord=1) / tf.norm(f_, ord=1) > 1e-3) and iter < num_iters:
         f_ = 1.0 * f
         f = - epsilon * tf.reduce_logsumexp(log_beta + (g - c) / epsilon, axis=1)
         g = - epsilon * tf.reduce_logsumexp(log_alpha + (tf.expand_dims(f, 1) - c) / epsilon, axis=0)

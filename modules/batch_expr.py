@@ -41,15 +41,17 @@ class BPFBatchObs:
     def run_single_expr(self, seed):
         # set random seed
         np.random.seed(seed)
+        # generate observation
+        observed_path = self.model.observation.generate_path(self.true_trajectory)
         # set up logging
         config = copy.deepcopy(self.config)
         config['seed'] = seed
         expr_name = '{}_seed_{}'.format(self.config_id, seed)
         cc = cf.ConfigCollector(expr_name = expr_name, folder = self.results_folder)
-        self.bpf = fl.ParticleFilter(self.model, particle_count = self.config['particle_count'], folder = cc.res_path)
-        # generate observation
-        observed_path = self.model.observation.generate_path(self.true_trajectory)
+        
         # assimilate
+        np.random.seed(0)
+        self.bpf = fl.ParticleFilter(self.model, particle_count = self.config['particle_count'], folder = cc.res_path)
         print("starting assimilation ... ")
         self.bpf.update(observed_path, method = 'mean', resampling_method=self.config['resampling_method'],\
                         threshold_factor=self.config['resampling_threshold'], noise=self.config['resampling_cov'])
@@ -138,26 +140,36 @@ class AvgDistPlotter:
     Plots average distance for same number of particles
     """
     def __init__(self, dist_folder):
-        self.dist_folder = dist_folder 
-        self.particle_counts = {f: int(f.split('_')[-1]) for f in os.listdir(dist_folder)}
-        self.max_particle_count = max(self.particle_counts.values())
+        self.dist_folder = dist_folder
+        # sort folders according to particle counts in ascending order
+        self.folders = os.listdir(dist_folder)
+        self.particle_counts = [int(f.split('_')[-1]) for f in self.folders]
+        self.particle_counts, self.folders = zip(*sorted(zip(self.particle_counts, self.folders)))
+        # set colors and line styles
         self.colors = ['red', 'green', 'blue', 'orange', 'grey', 'purple']
+        self.line_styles = [':', '-.', '--', '-']
+        
 
-    def plot(self, file_path, gap=4, ev_time=400):
+    def plot(self, file_path, gap=4, ev_time=400, low_idx=0, high_idx=None):
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111)
-        for j, folder in enumerate(os.listdir(self.dist_folder)):
-            for i, f in enumerate(os.listdir(self.dist_folder + '/' + folder)):
+        for j, folder in enumerate(self.folders):
+            dist_files = os.listdir(self.dist_folder + '/' + folder)
+            if high_idx is None:
+                high_idx = len(dist_files)
+            for i, f in enumerate(dist_files[low_idx: high_idx]):
                 df = pd.read_csv(self.dist_folder + '/' + folder + '/' + f)
-                df = df.loc[df['time'].isin([j for j in range(0, ev_time, gap)])]
-                label = f.split('.')[0].replace('_', ' ') if j==0 else None
-                if self.particle_counts[folder] != self.max_particle_count:
-                    sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], color=self.colors[i], ci=None, ax=ax,\
-                                 label=label)
+                df = df.loc[df['time'].isin([k for k in range(0, ev_time, gap)])]
+                label = f.split('.')[0].replace('_', ' ') + ' {}'.format(self.particle_counts[j])
+                # set confidence interval
+                if j < len(self.folders) - 1:
+                    ci = None
                 else:
-                    sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], color=self.colors[i], ci='sd', ax=ax,\
-                                 label=label)
-                #plt.show()
+                    ci = 'sd'
+                sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], color=self.colors[i], ci=ci, ax=ax,\
+                                label=label, linestyle=self.line_styles[j])
+                plt.xlabel('assimilation step')
+                plt.ylabel('$\sqrt{S_{0.01}}$')
                 plt.savefig(file_path)
 
 

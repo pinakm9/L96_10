@@ -11,7 +11,7 @@ import os
 import numpy as np
 # first 10 odd primes as random seeds
 seeds = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
-particle_count = 2000
+particle_count = 1000
 ev_time = 500
 id_ = 0
 config_folder = '../configs/{}_pc_{}'.format(id_, particle_count)
