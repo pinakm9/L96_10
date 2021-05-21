@@ -13,8 +13,8 @@ import numpy as np
 seeds = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
 id_ = 1
 dist_folder = 'dists/{}'.format(id_)
-file_path = 'plots/{}_dist.png'.format(str(id_))
+file_path = 'plots/{}_dist.png'.format(str(id_) + '_2_vs_3')
 
 # compute distances
 batch_plotter = be.AvgDistPlotter(dist_folder)
-batch_plotter.plot(file_path, gap=4, ev_time=400, low_idx=0, high_idx=1)
+batch_plotter.plot(file_path, gap=4, ev_time=400, low_idx=2, high_idx=3)

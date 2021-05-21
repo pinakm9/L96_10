@@ -20,6 +20,7 @@ import utility as ut
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import scipy
 
 class BPFBatchObs:
     """
@@ -50,7 +51,7 @@ class BPFBatchObs:
         cc = cf.ConfigCollector(expr_name = expr_name, folder = self.results_folder)
         
         # assimilate
-        np.random.seed(0)
+        #np.random.seed(0)
         self.bpf = fl.ParticleFilter(self.model, particle_count = self.config['particle_count'], folder = cc.res_path)
         print("starting assimilation ... ")
         self.bpf.update(observed_path, method = 'mean', resampling_method=self.config['resampling_method'],\
@@ -150,11 +151,11 @@ class AvgDistPlotter:
         self.line_styles = [':', '-.', '--', '-']
         
 
-    def plot(self, file_path, gap=4, ev_time=400, low_idx=0, high_idx=None):
+    def plot(self, save_path, gap=4, ev_time=400, low_idx=0, high_idx=None):
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111)
         for j, folder in enumerate(self.folders):
-            dist_files = os.listdir(self.dist_folder + '/' + folder)
+            dist_files = sorted(os.listdir(self.dist_folder + '/' + folder))
             if high_idx is None:
                 high_idx = len(dist_files)
             for i, f in enumerate(dist_files[low_idx: high_idx]):
@@ -170,7 +171,53 @@ class AvgDistPlotter:
                                 label=label, linestyle=self.line_styles[j])
                 plt.xlabel('assimilation step')
                 plt.ylabel('$\sqrt{S_{0.01}}$')
-                plt.savefig(file_path)
+                plt.savefig(save_path)
 
 
+class BatchCov:
+    """
+    Computes highest eigenvalue for analysis covariance
+    """
+    def __init__(self, config_folder, results_folder, cov_folder):
+        self.results_folder = results_folder
+        self.asml_folders = sorted(os.listdir(results_folder))
+        self.cov_folder = cov_folder
+        self.configs = [f[:-5] for f in os.listdir(config_folder)]
+
+    def compute_eigh(self, folder, gap=4, ev_time=400):
+        asml = tables.open_file(self.results_folder + '/' + folder + '/assimilation.h5')
+        eigh = np.zeros(int(ev_time / gap))
+        for i, t in enumerate(range(0, ev_time, gap)):
+            print('computing eigenvalue for assimilation step #{}'.format(t), end='\r')
+            ensemble = np.array(getattr(asml.root.particles, 'time_' + str(t)).read().tolist()).T
+            cov = np.cov(ensemble)
+            eigh[i] = scipy.linalg.eigh(cov, subset_by_index=[cov.shape[0]-1, cov.shape[0]-1], eigvals_only=True)[0]
+        asml.close()
+        return eigh
+
+    def run(self, gap=4, ev_time=400):
+        for config in self.configs:
+            data = {'time': [], 'seed':[], 'eigh': []}
+            for folder in self.asml_folders:
+                if folder.startswith(config):
+                    seed = int(folder.split('#')[0].split('_')[-1])
+                    print('working on {}_seed_{}'.format(config, seed))
+                    eigh = self.compute_eigh(folder, gap, ev_time)
+                    data['eigh'] += list(eigh)
+                    data['time'] += list(range(0, ev_time, gap))
+                    data['seed'] += [seed] * len(eigh)
+            df = pd.DataFrame(data)
+            df.to_csv(self.cov_folder + '/{}.csv'.format(config), index=False)
+
+    def plot(self, save_path):
+        fig = plt.figure(figsize=(10, 10))
+        ax = fig.add_subplot(111)
+        colors = ['red', 'green', 'blue', 'orange', 'grey', 'purple']
+        for i, f in enumerate(os.listdir(self.cov_folder)):
+            df = pd.read_csv(self.cov_folder + '/' + f)
+            sns.lineplot(data=df, x=df['time'], y=df['eigh'], color=colors[i], ci=None, ax=ax,\
+                         label=f[:-4])
+        plt.xlabel('assimilation step')
+        plt.ylabel('largest eigenvalue of analysis covarience')
+        plt.savefig(save_path)
 
