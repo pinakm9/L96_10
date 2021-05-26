@@ -9,11 +9,11 @@ sys.path.insert(0, module_dir + '/modules')
 import batch_expr as be 
 import numpy as np
 # first 10 odd primes as random seeds
-id_ = 1
-particle_count = 2000
+id_ = 0
+particle_count = 1000
 config_folder = '../configs/{}_pc_{}'.format(id_, particle_count)
 results_folder = 'results/{}_pc_{}'.format(id_, particle_count)
-cov_folder = 'cov/{}_pc_{}'.format(id_, particle_count)
+cov_folder = 'cov/{}/pc_{}'.format(id_, particle_count)
 save_path = 'plots/{}_pc_{}_cov.png'.format(id_, particle_count)
 
 # compute distances

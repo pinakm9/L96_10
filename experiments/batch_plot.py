@@ -9,12 +9,14 @@ sys.path.insert(0, module_dir + '/modules')
 import batch_expr as be 
 import os
 import numpy as np
-# first 10 odd primes as random seeds
-seeds = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
-id_ = 1
-dist_folder = 'dists/{}'.format(id_)
-file_path = 'plots/{}_dist.png'.format(str(id_) + '_2_vs_3')
 
-# compute distances
-batch_plotter = be.AvgDistPlotter(dist_folder)
-batch_plotter.plot(file_path, gap=4, ev_time=400, low_idx=2, high_idx=3)
+fnames = ['1_vs_2', '1_vs_3', '2_vs_3']
+pc_idx = [0, 1, 2, 3]
+for id_ in [0, 1]:
+    for low_idx in [0, 1, 2]:
+        high_idx = low_idx + 1
+        dist_folder = 'dists/{}'.format(id_)
+        file_path = 'plots/{}/dist_{}.png'.format(id_, fnames[low_idx])
+        # plot distances
+        batch_plotter = be.AvgDistPlotter(dist_folder)
+        batch_plotter.plot(file_path, gap=4, ev_time=400, low_idx=low_idx, high_idx=high_idx, pc_idx=pc_idx)

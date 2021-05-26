@@ -151,27 +151,43 @@ class AvgDistPlotter:
         self.line_styles = [':', '-.', '--', '-']
         
 
-    def plot(self, save_path, gap=4, ev_time=400, low_idx=0, high_idx=None):
-        fig = plt.figure(figsize=(10, 10))
-        ax = fig.add_subplot(111)
-        for j, folder in enumerate(self.folders):
-            dist_files = sorted(os.listdir(self.dist_folder + '/' + folder))
-            if high_idx is None:
-                high_idx = len(dist_files)
-            for i, f in enumerate(dist_files[low_idx: high_idx]):
-                df = pd.read_csv(self.dist_folder + '/' + folder + '/' + f)
-                df = df.loc[df['time'].isin([k for k in range(0, ev_time, gap)])]
-                label = f.split('.')[0].replace('_', ' ') + ' {}'.format(self.particle_counts[j])
-                # set confidence interval
-                if j < len(self.folders) - 1:
-                    ci = None
-                else:
-                    ci = 'sd'
-                sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], color=self.colors[i], ci=ci, ax=ax,\
-                                label=label, linestyle=self.line_styles[j])
-                plt.xlabel('assimilation step')
-                plt.ylabel('$\sqrt{S_{0.01}}$')
-                plt.savefig(save_path)
+    def plot(self, save_path, gap=4, ev_time=400, low_idx=0, high_idx=None, pc_idx=None):
+        with plt.style.context('seaborn-paper'): # 'tableau-colorblind10'
+            fig = plt.figure(figsize=(10, 10))
+            ax = fig.add_subplot(111)
+            ax.tick_params(axis='both', which='major', labelsize=20)
+            ax.tick_params(axis='both', which='minor', labelsize=20)
+            if pc_idx is None:
+                pc_idx = list(range(len(self.particle_counts)))
+            k = 0
+            for j, folder in enumerate(self.folders):
+                if j not in pc_idx:
+                    continue
+                dist_files = sorted(os.listdir(self.dist_folder + '/' + folder))
+                if high_idx is None:
+                    high_idx = len(dist_files)
+                for i, f in enumerate(dist_files[low_idx: high_idx]):
+                    df = pd.read_csv(self.dist_folder + '/' + folder + '/' + f)
+                    df = df.loc[df['time'].isin([k for k in range(0, ev_time, gap)])]
+                    label = '#particles = {}'.format(self.particle_counts[j])
+                    # set confidence interval
+                    if j < len(self.folders) - 1:
+                        ci = None
+                    else:
+                        ci = 'sd'
+                    if high_idx - low_idx == 1:
+                        color = 'black'
+                    else:
+                        color = self.colors[i]
+                    sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], ci=ci, ax=ax,\
+                                    label=label)
+                k += 1
+            plt.xlabel('assimilation step', fontsize=20)
+            plt.ylabel('$\sqrt{S_{0.01}}$', fontsize=20)
+            plt.title('initial measures ' + f.split('.')[0].replace('_', ' '), fontsize=20)
+            plt.legend(fontsize=20)
+            plt.savefig(save_path)
+
 
 
 class BatchCov:

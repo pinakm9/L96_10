@@ -81,7 +81,7 @@ def sinkhorn_div_tf(x, y, alpha=None, beta=None, epsilon=0.01, num_iters=200, p=
         f = - epsilon * tf.reduce_logsumexp(log_beta + (g - c) / epsilon, axis=1)
         g = - epsilon * tf.reduce_logsumexp(log_alpha + (tf.expand_dims(f, 1) - c) / epsilon, axis=0)
         iter += 1
-    print('iteration count = {}'.format(iter))
+    #print('iteration count = {}'.format(iter))
 
     OT_alpha_beta = tf.reduce_sum(f * alpha) + tf.reduce_sum(g * beta)
     
@@ -104,6 +104,6 @@ def sinkhorn_div_tf(x, y, alpha=None, beta=None, epsilon=0.01, num_iters=200, p=
         iter += 1
     
     d = tf_round(OT_alpha_beta - tf.reduce_sum(f * alpha) - tf.reduce_sum(g * beta), 5)
-    print(d**0.5)
+    #print(d**0.5)
     return d#tf_round(OT_alpha_beta - tf.reduce_sum(f * alpha) - tf.reduce_sum(g * beta), 5)
 
