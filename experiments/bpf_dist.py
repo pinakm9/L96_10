@@ -16,14 +16,14 @@ import pandas as pd
 
 # first 10 odd primes as random seeds
 seeds = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
-particle_count_0 = 500
-particle_count_1 = 1000
-id_ = 1
+particle_count_0 = 250
+particle_count_1 = 2000
+id_ = 0
 config_folder = '../configs/{}_pc_{}'.format(id_, particle_count_0)
 results_folder_0 = 'results/{}_pc_{}'.format(id_, particle_count_0)
 results_folder_1 = 'results/{}_pc_{}'.format(id_, particle_count_1)
 
-dist_folder = 'bpf_dists/{}'.format(id_)
+dist_folder = 'bpf_dists'.format(id_)
 ev_time = 400
 gap = 4
 
@@ -54,4 +54,4 @@ for j, config in enumerate(sorted(os.listdir(config_folder))):
         data['time'] += list(range(0, ev_time, gap))
         data['seed'] += [seed] * len(dist)
     df = pd.DataFrame(data)
-    df.to_csv(dist_folder + '/{}_{}_vs_{}.csv'.format(config, particle_count_0, particle_count_1), index=False)
+    df.to_csv(dist_folder + '/{}_{}_{}_vs_{}.csv'.format(id_, config, particle_count_0, particle_count_1), index=False)

@@ -17,15 +17,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # first 10 odd primes as random seeds
-seeds = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
-index_map = list(range(1, len(seeds)+1, 1))
-index_map2 = [0, 2, 4]
-particle_count = 1000
+particle_count = 250
 id_ = 0
 config_folder = '../configs/{}_pc_{}'.format(id_, particle_count)
 results_folder = 'results/{}_pc_{}'.format(id_, particle_count)
 enkf_folder = 'enkf_results'
-dist_folder = 'enkf_dists/{}'.format(id_)
+dist_folder = 'enkf_dists/{}_pc_{}'.format(id_, particle_count)
+cov_folder = 'cov/{}_pc_{}'.format(id_, particle_count)
 ev_time = 400
 gap = 4
 
@@ -37,8 +35,17 @@ with plt.style.context('seaborn-paper'):
     for i, config in enumerate(sorted(os.listdir(config_folder))):
         config = config[:-5]
         df = pd.read_csv(dist_folder + '/{}.csv'.format(config))
-        sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], ci=None, ax=ax, label='initial measure ' + config.split('_')[-1])
+        sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], ci=None, ax=ax, label='$\mu_{}$'.format(config.split('_')[-1]))
+    """
+    for i, config in enumerate(sorted(os.listdir(config_folder))):
+        config = config[:-5]
+        df_cov = pd.read_csv(cov_folder + '/{}.csv'.format(config))
+        sns.lineplot(data=df, x=df_cov['time'], y=np.sqrt(df_cov['eigh']), ci=None, ax=ax,\
+                     label='sqrt of avg largest ev for BPF {} for im '.format(particle_count) + config.split('_')[-1],\
+                     linestyle='dotted')
+    """
     plt.xlabel('assimilation step', fontsize=20)
-    plt.ylabel('$\sqrt{S_{0.01}}$', fontsize=20)
+    plt.ylabel('$D_\epsilon$', fontsize=20)
+    plt.title('$D_\epsilon(\pi^P_n(\mu), \pi^E_n(\mu))$', fontsize=30)
     plt.legend(fontsize=20)
-    plt.savefig('plots/enkf/enkf{}_vs_bpf{}.png'.format(200, particle_count))
+    plt.savefig('plots/enkf/enkf_{}_vs_bpf_{}.png'.format(200, particle_count))

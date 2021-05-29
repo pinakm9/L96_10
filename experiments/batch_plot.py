@@ -16,7 +16,8 @@ for id_ in [0, 1]:
     for low_idx in [0, 1, 2]:
         high_idx = low_idx + 1
         dist_folder = 'dists/{}'.format(id_)
+        initial_dist_folder = 'initial_dists/{}'.format(id_)
         file_path = 'plots/{}/dist_{}.png'.format(id_, fnames[low_idx])
         # plot distances
-        batch_plotter = be.AvgDistPlotter(dist_folder)
-        batch_plotter.plot(file_path, gap=4, ev_time=400, low_idx=low_idx, high_idx=high_idx, pc_idx=pc_idx)
+        batch_plotter = be.AvgDistPlotter(dist_folder, initial_dist_folder)
+        batch_plotter.plot(file_path, gap=4, ev_time=400, low_idx=low_idx, high_idx=high_idx, pc_idx=pc_idx, inset=True)

@@ -21,6 +21,7 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy
+from matplotlib.ticker import MaxNLocator
 
 class BPFBatchObs:
     """
@@ -99,7 +100,7 @@ class BatchDist:
 
         dist = np.zeros(int(ev_time / gap))
         for i, t in enumerate(range(0, ev_time, gap)):
-            print('computing distance for step #{}'.format(t))
+            print('computing distance for step #{}'.format(t), end='\r')
             ensemble_1 = np.array(getattr(file_1.root.particles, 'time_' + str(t)).read().tolist())
             ensemble_2 = np.array(getattr(file_2.root.particles, 'time_' + str(t)).read().tolist())
             #weights_1 = np.array(getattr(file_1.root.weights, 'time_' + str(t)).read().tolist())
@@ -140,10 +141,11 @@ class AvgDistPlotter:
     """
     Plots average distance for same number of particles
     """
-    def __init__(self, dist_folder):
+    def __init__(self, dist_folder, inset_dist_folder=None):
         self.dist_folder = dist_folder
+        self.inset_dist_folder = inset_dist_folder
         # sort folders according to particle counts in ascending order
-        self.folders = os.listdir(dist_folder)
+        self.folders = sorted(os.listdir(dist_folder))
         self.particle_counts = [int(f.split('_')[-1]) for f in self.folders]
         self.particle_counts, self.folders = zip(*sorted(zip(self.particle_counts, self.folders)))
         # set colors and line styles
@@ -151,12 +153,15 @@ class AvgDistPlotter:
         self.line_styles = [':', '-.', '--', '-']
         
 
-    def plot(self, save_path, gap=4, ev_time=400, low_idx=0, high_idx=None, pc_idx=None):
+    def plot(self, save_path, gap=4, ev_time=400, low_idx=0, high_idx=None, pc_idx=None, inset=False, ev_time2=20):
         with plt.style.context('seaborn-paper'): # 'tableau-colorblind10'
             fig = plt.figure(figsize=(10, 10))
             ax = fig.add_subplot(111)
             ax.tick_params(axis='both', which='major', labelsize=20)
             ax.tick_params(axis='both', which='minor', labelsize=20)
+            if inset:
+                ax_inset = ax.inset_axes([0.1, 0.5, 0.47, 0.47])
+                ax_inset.xaxis.set_major_locator(MaxNLocator(integer=True))
             if pc_idx is None:
                 pc_idx = list(range(len(self.particle_counts)))
             k = 0
@@ -164,6 +169,8 @@ class AvgDistPlotter:
                 if j not in pc_idx:
                     continue
                 dist_files = sorted(os.listdir(self.dist_folder + '/' + folder))
+                if inset:
+                    inset_dist_files = sorted(os.listdir(self.inset_dist_folder + '/' + folder))
                 if high_idx is None:
                     high_idx = len(dist_files)
                 for i, f in enumerate(dist_files[low_idx: high_idx]):
@@ -181,12 +188,21 @@ class AvgDistPlotter:
                         color = self.colors[i]
                     sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], ci=ci, ax=ax,\
                                     label=label)
+                    if inset:
+                        df_inset = pd.read_csv(self.inset_dist_folder + '/' + folder + '/' + f)
+                        df_inset = df_inset.loc[df_inset['time'].isin([k for k in range(ev_time2)])]
+                        sns.lineplot(data=df_inset, x=df_inset['time'], y=df_inset['sinkhorn_div'], ci=ci, ax=ax_inset)
+                        ax_inset.set_xlabel('', fontsize=20)
+                        ax_inset.set_ylabel('', fontsize=20)
+                        
                 k += 1
             plt.xlabel('assimilation step', fontsize=20)
-            plt.ylabel('$\sqrt{S_{0.01}}$', fontsize=20)
-            plt.title('initial measures ' + f.split('.')[0].replace('_', ' '), fontsize=20)
+            plt.ylabel('$D_{\epsilon}$', fontsize=20)
+            id_1, _,  id_2 = f.split('.')[0].split('_')
+            plt.title('$D_\epsilon(\pi_n^P(\mu_{}), \pi_n^P(\mu_{}))$'.format(id_1, id_2), fontsize=30)
             plt.legend(fontsize=20)
             plt.savefig(save_path)
+
 
 
 

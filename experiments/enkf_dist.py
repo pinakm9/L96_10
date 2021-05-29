@@ -18,12 +18,12 @@ import pandas as pd
 seeds = [3, 5, 7, 11, 13, 17, 19, 23, 29, 31]
 index_map = list(range(1, len(seeds)+1, 1))
 index_map2 = [0, 2, 4]
-particle_count = 1000
+particle_count = 2000
 id_ = 0
 config_folder = '../configs/{}_pc_{}'.format(id_, particle_count)
 results_folder = 'results/{}_pc_{}'.format(id_, particle_count)
 enkf_folder = 'enkf_results'
-dist_folder = 'enkf_dists'
+dist_folder = 'enkf_dists/{}_pc_{}'.format(id_, particle_count)
 ev_time = 400
 gap = 4
 
@@ -66,4 +66,4 @@ for j, config in enumerate(sorted(os.listdir(config_folder))):
         data['time'] += list(range(0, ev_time, gap))
         data['seed'] += [seed] * len(dist)
     df = pd.DataFrame(data)
-    #df.to_csv(dist_folder + '/{}.csv'.format(config), index=False)
+    df.to_csv(dist_folder + '/{}.csv'.format(config), index=False)
