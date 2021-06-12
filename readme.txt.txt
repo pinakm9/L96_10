@@ -1,0 +1,1 @@
+Some experiments with chaotic 10 dimensional Lorenz 96 with particle filters, investigating stability

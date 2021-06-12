@@ -42,4 +42,5 @@ with plt.style.context('seaborn-paper'):
     plt.ylabel('$D_\epsilon$', fontsize=20)
     plt.title('distance between particle filters with different number of particles', fontsize=20)
     plt.legend(fontsize=20)
+    plt.tight_layout()
     plt.savefig('plots/enkf/bpf_{}_vs_bpf_{}.png'.format(particle_count_0, particle_count_1))

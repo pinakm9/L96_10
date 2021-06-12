@@ -153,15 +153,18 @@ class AvgDistPlotter:
         self.line_styles = [':', '-.', '--', '-']
         
 
-    def plot(self, save_path, gap=4, ev_time=400, low_idx=0, high_idx=None, pc_idx=None, inset=False, ev_time2=20):
+    def plot(self, save_path, gap=4, ev_time=400, low_idx=0, high_idx=None, pc_idx=None, inset=False, ev_time2=20, y_lims=[None, None]):
         with plt.style.context('seaborn-paper'): # 'tableau-colorblind10'
             fig = plt.figure(figsize=(10, 10))
             ax = fig.add_subplot(111)
-            ax.tick_params(axis='both', which='major', labelsize=20)
-            ax.tick_params(axis='both', which='minor', labelsize=20)
+            ax.tick_params(axis='both', which='major', labelsize=30)
+            ax.tick_params(axis='both', which='minor', labelsize=30)
+            ax.set_ylim([y_lims[0], y_lims[1]])
             if inset:
                 ax_inset = ax.inset_axes([0.1, 0.5, 0.47, 0.47])
                 ax_inset.xaxis.set_major_locator(MaxNLocator(integer=True))
+                ax_inset.tick_params(axis='both', which='major', labelsize=20)
+                ax_inset.tick_params(axis='both', which='minor', labelsize=20)
             if pc_idx is None:
                 pc_idx = list(range(len(self.particle_counts)))
             k = 0
@@ -176,7 +179,7 @@ class AvgDistPlotter:
                 for i, f in enumerate(dist_files[low_idx: high_idx]):
                     df = pd.read_csv(self.dist_folder + '/' + folder + '/' + f)
                     df = df.loc[df['time'].isin([k for k in range(0, ev_time, gap)])]
-                    label = '#particles = {}'.format(self.particle_counts[j])
+                    label = 'N = {}'.format(self.particle_counts[j])
                     # set confidence interval
                     if j < len(self.folders) - 1:
                         ci = None
@@ -192,18 +195,17 @@ class AvgDistPlotter:
                         df_inset = pd.read_csv(self.inset_dist_folder + '/' + folder + '/' + f)
                         df_inset = df_inset.loc[df_inset['time'].isin([k for k in range(ev_time2)])]
                         sns.lineplot(data=df_inset, x=df_inset['time'], y=df_inset['sinkhorn_div'], ci=ci, ax=ax_inset)
-                        ax_inset.set_xlabel('', fontsize=20)
-                        ax_inset.set_ylabel('', fontsize=20)
+                        ax_inset.set_xlabel('', fontsize=30)
+                        ax_inset.set_ylabel('', fontsize=30)
                         
                 k += 1
-            plt.xlabel('assimilation step', fontsize=20)
-            plt.ylabel('$D_{\epsilon}$', fontsize=20)
+            plt.xlabel('assimilation step (n)', fontsize=30)
+            plt.ylabel('$D_{\epsilon}$', fontsize=30)
             id_1, _,  id_2 = f.split('.')[0].split('_')
-            plt.title('$D_\epsilon(\pi_n^P(\mu_{}), \pi_n^P(\mu_{}))$'.format(id_1, id_2), fontsize=30)
-            plt.legend(fontsize=20)
+            plt.title('L96(10),  $D_\epsilon(\pi_n^P(\mu_{}), \pi_n^P(\mu_{}))$'.format(id_1, id_2), fontsize=40)
+            plt.legend(fontsize=30)
+            plt.tight_layout()
             plt.savefig(save_path)
-
-
 
 
 class BatchCov:
