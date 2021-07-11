@@ -18,7 +18,7 @@ import pandas as pd
 np.random.seed(42)
 x0 = np.random.uniform(size=10)
 model, gen_path = Lorenz96_alt.get_model(x0=x0, size=10, obs_gap=0.1)
-length = 500
+length = 10000
 
 # find a trajectory on the attractor
 total_iters = int(1e5)
@@ -28,6 +28,6 @@ for i in range(int(total_iters/batch_size)):
     hidden_path = gen_path(x0, batch_size)
     x0 = hidden_path[-1]
 
-pd.DataFrame(gen_path(x0, length)).to_csv('trajectory_{}.csv'.format(length), header=None, index=None)
+pd.DataFrame(gen_path(x0, length)).to_csv('attractor_{}.csv'.format(length), header=None, index=None)
 
     
