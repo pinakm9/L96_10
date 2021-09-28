@@ -16,6 +16,7 @@ def make_scree_plots(asml_file, times, clean_up=True, resolution=300):
         cov = (X.T @ X) / X.shape[0]
         evals, _ = np.linalg.eigh(cov)
         evals = evals[::-1] / evals.sum()
+        print(evals)
         fig = plt.figure(figsize=(7, 7))
         ax = fig.add_subplot(111)
         ax.scatter(list(range(len(evals))), np.cumsum(evals))
