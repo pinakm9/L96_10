@@ -87,9 +87,9 @@ class BatchDist:
     def run_for_pair(self, config_id_1, config_id_2, seed, gap=4, ev_time=400, epsilon=0.01, num_iters=200, p=2):
         # find the right folders
         for f in os.listdir(self.results_folder):
-            if f.startswith(config_id_1) and f[:-2].endswith(str(seed)):
+            if f.startswith(config_id_1) and f.endswith(str(seed)):
                 folder_1 = self.results_folder + '/' + f
-            if f.startswith(config_id_2) and f[:-2].endswith(str(seed)):
+            if f.startswith(config_id_2) and f.endswith(str(seed)):
                 folder_2 = self.results_folder + '/' + f
         # figure out number of assimilation steps
         #with open(folder_1 + '/config.json') as f:
@@ -97,6 +97,12 @@ class BatchDist:
         
         file_1 = tables.open_file(folder_1 + '/assimilation.h5')
         file_2 = tables.open_file(folder_2 + '/assimilation.h5')
+
+        if ev_time is None:
+            ev_1 = len(file_1.root.observation.read().tolist())
+            ev_2 = len(file_2.root.observation.read().tolist())
+            ev_time = min(ev_1, ev_2)
+            print('minimum number of total assimilation steps counted  = {}'.format(ev_time))
 
         dist = np.zeros(int(ev_time / gap))
         for i, t in enumerate(range(0, ev_time, gap)):
@@ -118,7 +124,7 @@ class BatchDist:
         #np.save(file_path, dist)
         file_1.close()
         file_2.close()
-        return dist
+        return dist, ev_time
 
     @ut.timer
     def run(self, gap=4, ev_time=400, epsilon=0.01, num_iters=200, p=2):
@@ -127,8 +133,8 @@ class BatchDist:
                 data = {'time': [], 'seed':[], 'sinkhorn_div': []}
                 for i, seed in enumerate(self.seeds):
                     print('comparing {} and {} for seed: {}'.format(config_id_1, config_id_2, seed))
-                    dist = self.run_for_pair(config_id_1, config_id_2, seed, gap, ev_time, epsilon, num_iters, p)
-                    data['time'] += list(range(0, ev_time, gap))
+                    dist, num_steps = self.run_for_pair(config_id_1, config_id_2, seed, gap, ev_time, epsilon, num_iters, p)
+                    data['time'] += list(range(0, num_steps, gap))
                     data['seed'] += [seed] * len(dist) 
                     data['sinkhorn_div'] += list(dist)
                 df = pd.DataFrame(data)
@@ -139,7 +145,7 @@ class BatchDist:
 
 class AvgDistPlotter:
     """
-    Plots average distance for same number of particles
+    Plots average distance for same setup but different number of particles
     """
     def __init__(self, dist_folder, inset_dist_folder=None):
         self.dist_folder = dist_folder
@@ -153,13 +159,13 @@ class AvgDistPlotter:
         self.line_styles = [':', '-.', '--', '-']
         
 
-    def plot(self, save_path, gap=4, ev_time=400, low_idx=0, high_idx=None, pc_idx=None, inset=False, ev_time2=20, y_lims=[None, None]):
+    def plot(self, save_folder, gap=4, ev_time=400, low_idx=0, high_idx=None, pc_idx=None, inset=False, ev_time2=20, y_lims=None):
         with plt.style.context('seaborn-paper'): # 'tableau-colorblind10'
             fig = plt.figure(figsize=(10, 10))
             ax = fig.add_subplot(111)
             ax.tick_params(axis='both', which='major', labelsize=30)
             ax.tick_params(axis='both', which='minor', labelsize=30)
-            ax.set_ylim([y_lims[0], y_lims[1]])
+            
             if inset:
                 ax_inset = ax.inset_axes([0.1, 0.5, 0.47, 0.47])
                 ax_inset.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -168,6 +174,7 @@ class AvgDistPlotter:
             if pc_idx is None:
                 pc_idx = list(range(len(self.particle_counts)))
             k = 0
+            #print(self.folders)
             for j, folder in enumerate(self.folders):
                 if j not in pc_idx:
                     continue
@@ -175,7 +182,8 @@ class AvgDistPlotter:
                 if inset:
                     inset_dist_files = sorted(os.listdir(self.inset_dist_folder + '/' + folder))
                 if high_idx is None:
-                    high_idx = len(dist_files)
+                    high_idx = low_idx + 1 #len(dist_files)
+
                 for i, f in enumerate(dist_files[low_idx: high_idx]):
                     df = pd.read_csv(self.dist_folder + '/' + folder + '/' + f)
                     df = df.loc[df['time'].isin([k for k in range(0, ev_time, gap)])]
@@ -189,8 +197,11 @@ class AvgDistPlotter:
                         color = 'black'
                     else:
                         color = self.colors[i]
-                    sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], ci=ci, ax=ax,\
-                                    label=label)
+
+                    # find the number of seeds
+                    num_seeds = len(np.unique(df['seed'].to_numpy()))
+                    sns.lineplot(data=df, x=df['time'], y=df['sinkhorn_div'], ci=ci, ax=ax, label=label)
+  
                     if inset:
                         df_inset = pd.read_csv(self.inset_dist_folder + '/' + folder + '/' + f)
                         df_inset = df_inset.loc[df_inset['time'].isin([k for k in range(ev_time2)])]
@@ -199,12 +210,18 @@ class AvgDistPlotter:
                         ax_inset.set_ylabel('', fontsize=30)
                         
                 k += 1
-            plt.xlabel('assimilation step (n)', fontsize=30)
-            plt.ylabel('$D_{\epsilon}$', fontsize=30)
+            
+            if y_lims is not None:
+                ax.set_ylim([y_lims[0], y_lims[1]])
+ 
+            ax.set_xlabel('assimilation step (n)', fontsize=30)
+            ax.set_ylabel('$D_{\epsilon}$', fontsize=30)
             id_1, _,  id_2 = f.split('.')[0].split('_')
-            plt.title('L96(10),  $D_\epsilon(\pi_n^P(\mu_{}), \pi_n^P(\mu_{}))$'.format(id_1, id_2), fontsize=40)
+            ax.set_title('L96(10),  $D_\epsilon(\pi_n^P(\mu_{}), \pi_n^P(\mu_{}))$'.format(id_1, id_2), fontsize=40)
             plt.legend(fontsize=30)
             plt.tight_layout()
+            save_path = save_folder + '/{}.png'.format(f.split('.')[0])
+
             plt.savefig(save_path)
 
 
