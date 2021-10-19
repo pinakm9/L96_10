@@ -237,6 +237,10 @@ class BatchCov:
 
     def compute_eigh(self, folder, gap=4, ev_time=400):
         asml = tables.open_file(self.results_folder + '/' + folder + '/assimilation.h5')
+        if ev_time is None:
+            ev_time = len(asml.root.observation.read().tolist())
+        else:
+            ev_time = min(ev_time, len(asml.root.observation.read().tolist()))
         eigh = np.zeros(int(ev_time / gap))
         for i, t in enumerate(range(0, ev_time, gap)):
             print('computing eigenvalue for assimilation step #{}'.format(t), end='\r')
@@ -244,16 +248,17 @@ class BatchCov:
             cov = np.cov(ensemble)
             eigh[i] = scipy.linalg.eigh(cov, subset_by_index=[cov.shape[0]-1, cov.shape[0]-1], eigvals_only=True)[0]
         asml.close()
-        return eigh
+        return eigh, ev_time
 
     def run(self, gap=4, ev_time=400):
+        
         for config in self.configs:
             data = {'time': [], 'seed':[], 'eigh': []}
             for folder in self.asml_folders:
                 if folder.startswith(config):
                     seed = int(folder.split('#')[0].split('_')[-1])
                     print('working on {}_seed_{}'.format(config, seed))
-                    eigh = self.compute_eigh(folder, gap, ev_time)
+                    eigh, ev_time = self.compute_eigh(folder, gap, ev_time)
                     data['eigh'] += list(eigh)
                     data['time'] += list(range(0, ev_time, gap))
                     data['seed'] += [seed] * len(eigh)
@@ -264,9 +269,12 @@ class BatchCov:
         fig = plt.figure(figsize=(10, 10))
         ax = fig.add_subplot(111)
         colors = ['red', 'green', 'blue', 'orange', 'grey', 'purple']
+        
         for i, f in enumerate(os.listdir(self.cov_folder)):
-            df = pd.read_csv(self.cov_folder + '/' + f)
-            sns.lineplot(data=df, x=df['time'], y=df['eigh'], color=colors[i], ci=None, ax=ax,\
+            #print('kkkkkkk', self.cov_folder + '/' + f)
+            if f.endswith('.csv'):
+                df = pd.read_csv(self.cov_folder + '/' + f)
+                sns.lineplot(data=df, x=df['time'], y=df['eigh'], color=colors[i], ci=None, ax=ax,\
                          label=f[:-4])
         plt.xlabel('assimilation step')
         plt.ylabel('largest eigenvalue of analysis covarience')

@@ -22,14 +22,15 @@ for id_ in [0, 1]:
         dist_folder = 'initial_dists/{0}_pc_{1}'.format(id_, particle_count)
 """
 for cfolder in glob.glob('configs/*/*/'):
-        # compute distances
-        cfolder = cfolder.replace('\\', '/')
-        print(cfolder)
-        parts = cfolder.split('/')
-        results_folder = 'results/{}/{}'.format(parts[1], parts[2])
-        print(results_folder)
-        dist_folder = 'bpf_dists/{}/{}'.format(parts[1], parts[2])
-        if not os.path.isdir(dist_folder):
-            os.makedirs(dist_folder)
-        batch_dist = be.BatchDist(cfolder, seeds, results_folder, dist_folder)
-        batch_dist.run(gap=1, ev_time=None, epsilon=0.01, num_iters=200, p=2)
+        if True:#'gap_5' in cfolder:
+            # compute distances
+            cfolder = cfolder.replace('\\', '/')
+            print(cfolder)
+            parts = cfolder.split('/')
+            results_folder = 'results/{}/{}'.format(parts[1], parts[2])
+            print(results_folder)
+            dist_folder = 'bpf_dists/{}/{}'.format(parts[1], parts[2])
+            if not os.path.isdir(dist_folder):
+                os.makedirs(dist_folder)
+            batch_dist = be.BatchDist(cfolder, seeds, results_folder, dist_folder)
+            batch_dist.run(gap=1, ev_time=200 if 'gap_5' in cfolder else None , epsilon=0.01, num_iters=200, p=2)

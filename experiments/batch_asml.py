@@ -15,7 +15,7 @@ particle_count = 500
 ev_time = 500
 id_ = 0
 config_folder = '../configs/{}_pc_{}'.format(id_, particle_count)
-true_trajectory = np.genfromtxt('../models/trajectory_500.csv', delimiter=',', dtype=np.float64)[:ev_time]
+true_trajectory = np.genfromtxt('../models/trajectory_1_500.csv', delimiter=',', dtype=np.float64)[:ev_time]
 results_folder = 'results/{}_pc_{}'.format(id_, particle_count)
 for config_file in os.listdir(config_folder):
     batch_experiment = be.BPFBatchObs(config_folder + '/' + config_file, true_trajectory, seeds, results_folder)

@@ -25,18 +25,20 @@ for folder in glob.glob('bpf_dists/*/*/'):
 fnames = ['1_vs_2', '1_vs_3', '2_vs_3']
 
 pc_idx = [0, 1, 2, 3]
-for folder in glob.glob('bpf_dists/*/*/'):
-    dist_folder = folder.replace('\\', '/')
-    parts = dist_folder.split('/')
-    print('working on distance folder {}'.format(dist_folder))
-    plot_folder = '/'.join(['plots'] + parts[1:])
-    if plot_folder.endswith('/'):
-        plot_folder = plot_folder[:-1]
-    if not os.path.isdir(plot_folder):
-        os.makedirs(plot_folder)
-    for low_idx in [0, 1, 2]:
-        batch_plotter = be.AvgDistPlotter(dist_folder)
-        batch_plotter.plot(plot_folder, gap=1, ev_time=50, low_idx=low_idx, pc_idx=pc_idx, inset=False, y_lims=None)
+for folder in glob.glob('bpf_dists/*/*'):
+    if 'gap_5' in folder:
+        dist_folder = folder.replace('\\', '/')
+        parts = dist_folder.split('/')
+        print('working on distance folder {}'.format(dist_folder))
+        plot_folder = '/'.join(['plots'] + parts[1:])
+        print('working on plot folder {}'.format(plot_folder))
+        if plot_folder.endswith('/'):
+            plot_folder = plot_folder[:-1]
+        if not os.path.isdir(plot_folder):
+            os.makedirs(plot_folder)
+        for low_idx in [0, 1, 2]:
+            batch_plotter = be.AvgDistPlotter(dist_folder)
+            batch_plotter.plot(plot_folder, gap=1, ev_time=200, low_idx=low_idx, pc_idx=pc_idx, inset=False, y_lims=None)
 
 """
 fnames = ['1_vs_2', '1_vs_3', '2_vs_3']

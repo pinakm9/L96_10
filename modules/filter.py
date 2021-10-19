@@ -140,25 +140,25 @@ class ParticleFilter(Filter):
         if folder is not None:
             self.recording = True
             self.record_path = folder + '/assimilation.h5'
-            if not os.path.isfile(self.record_path):
-                self.particle_description = {}
-                for i in range(self.dimension):
-                    self.particle_description['x' + str(i)] = tables.Float64Col(pos = i)
-                observation_description = {}
-                for i in range(self.model.observation.dimension):
-                    observation_description['x' + str(i)] = tables.Float64Col(pos = i)
-                self.weight_description = {'w': tables.Float64Col(pos = 0)}
-                self.bool_description = {'bool': tables.BoolCol(pos = 0)}
-                hdf5 = tables.open_file(self.record_path, 'w')
-                hdf5.create_group('/', 'particles')
-                #print(hdf5.root.particles)
-                hdf5.create_group('/', 'weights')
-                #hdf5.create_group('/', 'analysis_weights')
-                rs = hdf5.create_table(hdf5.root, 'resampling', self.bool_description)
-                rs.flush()
-                obs = hdf5.create_table(hdf5.root, 'observation', observation_description)
-                obs.flush()
-                hdf5.close()
+            
+            self.particle_description = {}
+            for i in range(self.dimension):
+                self.particle_description['x' + str(i)] = tables.Float64Col(pos = i)
+            observation_description = {}
+            for i in range(self.model.observation.dimension):
+                observation_description['x' + str(i)] = tables.Float64Col(pos = i)
+            self.weight_description = {'w': tables.Float64Col(pos = 0)}
+            self.bool_description = {'bool': tables.BoolCol(pos = 0)}
+            hdf5 = tables.open_file(self.record_path, 'w')
+            hdf5.create_group('/', 'particles')
+            #print(hdf5.root.particles)
+            hdf5.create_group('/', 'weights')
+            #hdf5.create_group('/', 'analysis_weights')
+            rs = hdf5.create_table(hdf5.root, 'resampling', self.bool_description)
+            rs.flush()
+            obs = hdf5.create_table(hdf5.root, 'observation', observation_description)
+            obs.flush()
+            hdf5.close()
         else:
             self.recording = False
 
