@@ -10,6 +10,8 @@ import tables
 import copy
 import math
 import matplotlib.pyplot as plt
+import hashlib, json
+import config as cf
 
 class Model():
     """
@@ -19,7 +21,7 @@ class Model():
         hidden_state: a MarkovChain object simulating the hidden state
         observation: an SPConditional object simulating the observations
     """
-    def __init__(self, dynamic_model, measurement_model, projection_matrix = None):
+    def __init__(self, dynamic_model, measurement_model, projection_matrix = None, **params):
         """
         Args:
             dynamic_model: MarkovChain object specifying the hidden_state model
@@ -39,6 +41,114 @@ class Model():
             measurement_model = sm.MeasurementModel(size = measurement_model.size, func = proj_func, sigma = proj_sigma)
         self.observation = measurement_model
         self.H =  measurement_model.func(0, np.identity(self.hidden_state.dimension), np.zeros(self.hidden_state.dimension))
+        self.params = params
+        
+
+
+
+class Parameters:
+    """
+    Description:
+        A class containing 3 types of parameters required to perform an assimilation experiment
+    """
+    def __init__(self, model, experiment_params, filter_params):
+        self.experiment = experiment_params
+        self.filter = filter_params
+        self.model = {}
+        self.set_model_params(model)
+    
+
+    def set_model_params(self, model):
+        #self.model['obs_gap'] = model.params['obs_gap']
+        self.model['state_cov'] = model.hidden_state.sigma[0][0]
+        #self.model['obs_coords'] = model.obs_coords
+        self.model = {**self.model, **model.params}
+
+
+    def get_all(self):
+        return {**self.model, **self.experiment, **self.filter} 
+
+
+class Experiment:
+
+    def __init__(self, get_model_func, model_params, experiment_params, filter_type, filter_params, folder=''):
+        self.model = get_model_func(**model_params)[0]
+        self.params = Parameters(self.model, experiment_params, filter_params)
+        self.name = experiment_params['tag']  
+        self.folder = folder + '{}{}'.format('' if folder=='' else '/', self.name)
+        if not os.path.isdir(self.folder):
+            os.makedirs(self.folder)
+        self.filter_type = filter_type     
+        
+
+
+    def run(self, true_trajectory):
+        true_trajectory = true_trajectory[: self.params.experiment['num_asml_steps']]
+        np.random.seed(self.params.experiment['obs_seed'])
+        observations = self.model.observation.generate_path(true_trajectory)
+        np.random.seed(self.params.experiment['filter_seed'])
+        self.filter = self.filter_type(self.model, folder=self.folder, **self.params.filter)
+        self.filter.update(observations)
+        cc = cf.ConfigCollector(folder = self.folder)
+        # document results
+        #if self.filter.status == 'success':
+        self.filter.plot_trajectories(true_trajectory, coords_to_plot=self.params.experiment['coords_to_plot'],\
+                                    file_path=self.folder + '/trajectories.png', measurements=False)
+        self.filter.compute_error(true_trajectory)
+        self.filter.plot_error(semilogy=True, resampling=False)
+        config = self.params.get_all()
+        config['status'] = self.filter.status
+        cc.add_params(config)
+        cc.write(mode='json')
+
+
+
+    def dict_hash(self, dictionary):
+        """MD5 hash of a dictionary."""
+        dhash = hashlib.md5()
+        # We need to sort arguments so {'a': 1, 'b': 2} is
+        # the same as {'b': 2, 'a': 1}
+        encoded = json.dumps(dictionary, sort_keys=True, cls=ut.NumpyEncoder).encode()
+        dhash.update(encoded)
+        
+        return dhash.hexdigest()
+
+
+    def get_id(self):
+        d = self.params.get_all()
+        d.pop('tag', None)
+        return self.dict_hash(d)
+
+
+
+class BatchExperiment:
+
+    def __init__(self, get_model_funcs, model_params, experiment_params, filter_types, filter_params, folders):
+        self.mparams_list = self.split_dict(model_params)
+        self.eparams_list = self.split_dict(experiment_params)
+        self.fparams_list = self.split_dict(filter_params)
+        self.get_model_funcs = get_model_funcs
+        self.filter_types = filter_types
+        self.folders = folders
+
+    def run(self, true_trajectories, end=None):
+        if end is not None:
+            mparams_list = self.mparams_list[:end]
+        else:
+            mparams_list = self.mparams_list
+        for i, model_params in enumerate(mparams_list):
+            experiment = Experiment(self.get_model_funcs[i], model_params, self.eparams_list[i], self.filter_types[i], self.fparams_list[i], self.folders[i])
+            print('working on experiment#{}, id = {}'.format(i, experiment.name))
+            experiment.run(true_trajectories[i])
+
+
+    def get_exps(self):
+        for i, model_params in enumerate(self.mparams_list):
+            yield Experiment(self.get_model_funcs[i], model_params, self.eparams_list[i], self.filter_types[i], self.fparams_list[i], self.folders[i])
+
+
+    def split_dict(self, d):
+        return list(map(dict, zip(*[[(k, v) for v in value] for k, value in d.items()])))
 
 class Filter():
     """
@@ -49,7 +159,7 @@ class Filter():
         model: a Model object containing the dynamic and measurement models
         current_time: integer-valued time starting at 0 denoting index of current hidden state
     """
-    def __init__(self, model):
+    def __init__(self, model, **filter_params):
         """
         Args:
             model: a Model object containing the dynamic and measurement models
@@ -59,6 +169,7 @@ class Filter():
         self.computed_trajectory = np.empty((0, self.model.hidden_state.dimension))
         self.dimension = self.model.hidden_state.dimension
         self.status = 'blank'
+        self.params = filter_params
 
     def compute_error(self, hidden_path):
         """
@@ -117,7 +228,7 @@ class ParticleFilter(Filter):
         weights: weights computed by the particle filter
         current_time: integer-valued time starting at 0 denoting index of current hidden state
     """
-    def __init__(self, model, particle_count, folder = None, particles = None):
+    def __init__(self, model, folder = None, particles = None, **filter_params):
         """
         Args:
             model: a Model object containing the dynamic and measurement models
@@ -126,10 +237,10 @@ class ParticleFilter(Filter):
             particles: custom particles to begin with, default = None
         """
         # assign attributes
-        super().__init__(model = model)
+        super().__init__(model = model, **filter_params)
         
-        self.particle_count = particle_count
-        self.weights = np.ones(particle_count)/particle_count
+        self.particle_count = self.params['particle_count']
+        self.weights = np.ones(self.particle_count)/self.particle_count
         self.resampling_tracker = []
         if particles is None:
             self.particles = self.model.hidden_state.sims[0].generate(self.particle_count)
@@ -163,7 +274,7 @@ class ParticleFilter(Filter):
             self.recording = False
 
 
-    def one_step_update(self, observation, particles = None):
+    def one_step_update(self, observation):
         """
         Description:
             Updates weights according to the last observation
@@ -219,7 +330,7 @@ class ParticleFilter(Filter):
         return len(np.unique(indices))
 
 
-    def systematic_noisy_resample(self, noise=0.5):
+    def systematic_noisy_resample(self):
         # make N subdivisions, and choose positions with a consistent random offset
         positions = (np.random.random() + np.arange(self.particle_count)) / self.particle_count
 
@@ -239,7 +350,7 @@ class ParticleFilter(Filter):
             offsprings[k] = math.ceil(self.weights[i]/weight_sum*self.particle_count)
         new_particles = np.zeros((sum(offsprings), self.dimension))
         mean = np.zeros(self.dimension)
-        cov = noise * np.identity(self.dimension)
+        cov = self.params['resampling_cov'] * np.identity(self.dimension)
         j = 0
         for k, i in enumerate(indices):
             new_particles[j] = self.particles[i]
@@ -249,7 +360,7 @@ class ParticleFilter(Filter):
         self.weights = np.ones(self.particle_count)/self.particle_count
         return len(indices)
 
-    def resample(self, threshold_factor = 0.1, method = 'systematic', **params):
+    def resample(self):
         """
         Description:
             Performs resampling
@@ -259,8 +370,8 @@ class ParticleFilter(Filter):
             bool, True if resampling occurred, False otherwise
         """
         # resample if effective particle count criterion is met
-        if 1.0/((self.weights**2).sum()) < threshold_factor*self.particle_count:
-            getattr(self, method + '_resample')(**params)
+        if 1.0/((self.weights**2).sum()) < self.params['threshold_factor']*self.particle_count:
+            getattr(self, self.params['resampling_method'] + '_resample')()
             self.resampling_tracker.append(True)
             return True # resampling occurred
         self.resampling_tracker.append(False)
@@ -319,8 +430,7 @@ class ParticleFilter(Filter):
             hdf5.close()
 
     @ut.timer
-    def update(self, observations, threshold_factor = 0.1, method = 'mean', resampling_method = 'systematic', record_path = None,\
-               pre_reg=None, post_reg=None, **params):
+    def update(self, observations,  method = 'mean',  record_path = None, pre_reg=None, post_reg=None):
         """
         Description:
             Updates using all the obeservations using self.one_step_update and self.resample
@@ -338,7 +448,7 @@ class ParticleFilter(Filter):
             if pre_reg is not None:
                 self.particles = [particle + np.random.normal(loc=pre_reg, size=self.model.hidden_state.dimension) for particle in self.particles]
             self.one_step_update(observation = observation)
-            self.resample(threshold_factor = threshold_factor, method = resampling_method, **params)
+            self.resample()
             if post_reg is not None:
                 self.particles = [particle + np.random.normal(loc=post_reg, size=self.model.hidden_state.dimension) for particle in self.particles]
                 self.weights = np.ones(self.particle_count) / self.particle_count
@@ -347,6 +457,8 @@ class ParticleFilter(Filter):
                 self.compute_trajectory(method = method)
             self.record(observation)
             if self.status == 'failure':
+                len_diff = len(observations) - len(self.computed_trajectory)
+                self.computed_trajectory = np.append(self.computed_trajectory, np.full((len_diff, self.model.hidden_state.dimension), np.nan), axis=0)
                 break
             self.current_time += 1
         if self.status != 'failure':
@@ -435,6 +547,15 @@ class ParticleFilter(Filter):
             weights_prior = copy.deepcopy(weights_posterior)
         ep.stich(folder = os.path.dirname(self.record_path), img_prefix = 'pf_ensembles', pdf_name = 'pf_evolution.pdf', clean_up = True,\
                  resolution = pdf_resolution)
+
+    
+    def compute_error(self, hidden_path):
+        super().compute_error(hidden_path)
+        if self.recording:
+            hdf5 = tables.open_file(self.record_path, 'a')
+            # record weights
+            weights = hdf5.create_array(hdf5.root, 'l2_error',  self.abs_error)
+            hdf5.close()
 
 
 class AttractorPF(ParticleFilter):

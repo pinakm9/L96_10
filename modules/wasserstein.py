@@ -1,4 +1,11 @@
 import tensorflow as tf
+import tables
+import numpy as np
+import utility as ut
+import pandas as pd
+import os
+import matplotlib.pyplot as plt
+import json
 
 def cost_matrix(x, y, p=2):
     "Returns the cost matrix C_{ij}=|x_i - y_j|^p"
@@ -107,3 +114,82 @@ def sinkhorn_div_tf(x, y, alpha=None, beta=None, epsilon=0.01, num_iters=200, p=
     #print(d**0.5)
     return d#tf_round(OT_alpha_beta - tf.reduce_sum(f * alpha) - tf.reduce_sum(g * beta), 5)
 
+class BatchDist:
+    """
+    Computes distance for a batch of experiments
+    """
+    def __init__(self, folder_list_1, folder_list_2, dist_folder):
+        self.flist_1 = folder_list_1
+        self.flist_2 = folder_list_2
+        self.dist_folder = dist_folder
+    
+    @ut.timer
+    def run_for_pair(self, folder_1, folder_2, gap=4, ev_time=400, epsilon=0.01, num_iters=200, p=2, plot=False):
+    
+        file_1 = tables.open_file(folder_1 + '/assimilation.h5', mode='r')
+        file_2 = tables.open_file(folder_2 + '/assimilation.h5', mode='r')
+
+        if ev_time is None:
+            ev_1 = len(file_1.root.observation.read().tolist())
+            ev_2 = len(file_2.root.observation.read().tolist())
+            ev_time = min(ev_1, ev_2)
+            print('minimum number of total assimilation steps counted  = {}'.format(ev_time))
+            #exit()
+
+        dist = np.zeros(int(ev_time / gap))
+        for i, t in enumerate(range(0, ev_time, gap)):
+            print('computing distance for step #{}'.format(t), end='\r')
+            ensemble_1 = np.array(getattr(file_1.root.particles, 'time_' + str(t)).read().tolist())
+            ensemble_2 = np.array(getattr(file_2.root.particles, 'time_' + str(t)).read().tolist())
+            #weights_1 = np.array(getattr(file_1.root.weights, 'time_' + str(t)).read().tolist())
+            #weights_2 = np.array(getattr(file_2.root.weights, 'time_' + str(t)).read().tolist())
+            ensemble_1 = tf.convert_to_tensor(ensemble_1, dtype=tf.float32)
+            ensemble_2 = tf.convert_to_tensor(ensemble_2, dtype=tf.float32)
+            #weights_1 = tf.convert_to_tensor(weights_1, dtype=tf.float32)
+            #weights_2 = tf.convert_to_tensor(weights_2, dtype=tf.float32)
+            dist[i] = (sinkhorn_div_tf(ensemble_1, ensemble_2,\
+                       epsilon=epsilon, num_iters=num_iters, p=p).numpy())**(1./p)
+
+        #file_path = '{}/{}_vs_{}.npy'.format(self.dist_folder, os.path.basename(folder_1), os.path.basename(folder_2))
+        #np.save(file_path, dist)
+        file_name = '{}/{}_vs_{}'.format(self.dist_folder, os.path.basename(folder_1), os.path.basename(folder_2))
+        data = {'time': [], 'sinkhorn_div': []}
+        data['time'] += list(range(0, ev_time, gap))
+        data['sinkhorn_div'] += list(dist)
+        df = pd.DataFrame(data)
+        df.to_csv(file_name + '.csv', index=False)
+        file_1.close()
+        file_2.close()
+        if plot:
+            with open(folder_1 + '/config.json', 'r') as config:
+                obs_gap = json.load(config)['obs_gap']
+
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            ax.plot(data['time'], data['sinkhorn_div'], label='obs_gap = {}'.format(obs_gap))
+            ax.set_xlabel('assimilation step')
+            ax.set_ylabel('sinkhorn distance')
+            plt.legend()
+            plt.savefig(file_name + '.png')
+        return dist, ev_time
+
+    @ut.timer
+    def run(self, gap=4, ev_time=400, epsilon=0.01, num_iters=200, p=2, plot=False):
+        for i, folder_1 in enumerate(self.flist_1):
+            folder_2 = self.flist_2[i]
+            print('comparing {} and {}'.format(folder_1, folder_2))
+            dist, num_steps = self.run_for_pair(folder_1, folder_2, gap, ev_time, epsilon, num_iters, p, plot)
+            #data['seed'] += [seed] * len(dist) 
+                
+
+def find_stability(signal, tail):
+    tailend = signal[-tail:-1]
+    mean = np.mean(tailend)
+    return np.where(signal <= mean)[0][0]
+
+def find_stability_sma(signal, **kwargs):
+    N = kwargs['window']
+    avg_signal = np.convolve(signal, np.ones(N)/N, mode='valid')
+    avg_signal_reversed = np.convolve(signal[::-1], np.ones(N)/N, mode='valid')
+    #print(avg_signal, avg_signal_reversed)
+    return np.where(avg_signal <= avg_signal_reversed)[0][0]
