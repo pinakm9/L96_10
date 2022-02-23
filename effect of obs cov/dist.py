@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from os.path import dirname, abspath
 script_dir = Path(dirname(abspath('')))
-module_dir = str(script_dir.parent)
+module_dir = str(script_dir)
 sys.path.insert(0, module_dir + '/modules')
 sys.path.insert(0, module_dir + '/models')
 print(module_dir)
