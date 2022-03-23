@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import os
 
 data_folder = 'data'
-ev_time = 100
+ev_time = {0.01: 315, 0.03: 105, 0.05:63, 0.07: 45, 0.09: 35}
 num_seeds = 10
 gap = 1
 obs_cov = 0.4
@@ -24,8 +24,8 @@ dim = 10
 fig_all = plt.figure(figsize=(8, 8))
 ax_all = fig_all.add_subplot(111)
 
-for obs_gap in [0.01, 0.03, 0.05, 0.07, 0.09]:
-    t = list(obs_gap * np.arange(0, ev_time, 1))
+for obs_gap, steps in ev_time.items():
+    t = list(obs_gap * np.arange(0, steps, 1))
     # find all the relevant files:
     current = []
     for folder in os.listdir(data_folder):

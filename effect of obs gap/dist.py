@@ -17,16 +17,16 @@ import pandas as pd
 import os
 
 num_seeds = 10
-num_obs_gaps = 1
+num_obs_gaps = 5
 num_experiments = num_seeds * num_obs_gaps
 x0 = np.genfromtxt('../models/trajectory_1_500.csv', dtype=np.float64, delimiter=',')[-1]
 
 model_params = {}
 model_params['x0'] = [x0] * num_experiments
-model_params['ev_time'] = [100] * num_experiments
+model_params['ev_time'] = [int(i) for i in np.repeat([315, 105, 63, 45, 35], num_seeds)]
 model_params['prior_cov'] = [0.1] * num_experiments
 model_params['shift'] = [0.0] * num_experiments
-model_params['obs_gap'] = np.repeat([0.01, 0.03, 0.05, 0.07, 0.09][4:], num_seeds)
+model_params['obs_gap'] = np.repeat([0.01, 0.03, 0.05, 0.07, 0.09], num_seeds)
 model_params['obs_cov'] = [0.4 for i in range(num_experiments)]
 
 experiment_params = {}
@@ -39,10 +39,10 @@ experiment_params['tag'] = ['prior_1_obs_gap_{}_obs_cov_{}_seed_{}'.format(gap, 
  
 _model_params = {}
 _model_params['x0'] = [x0] * num_experiments
-_model_params['ev_time'] = [100] * num_experiments
+_model_params['ev_time'] = [int(i) for i in np.repeat([315, 105, 63, 45, 35], num_seeds)]
 _model_params['prior_cov'] = [1.0] * num_experiments
 _model_params['shift'] = [4.0] * num_experiments
-_model_params['obs_gap'] = np.repeat([0.01, 0.03, 0.05, 0.07, 0.09][4:], num_seeds)
+_model_params['obs_gap'] = np.repeat([0.01, 0.03, 0.05, 0.07, 0.09], num_seeds)
 _model_params['obs_cov'] = [0.4 for i in range(num_experiments)]
 
 _experiment_params = {}
