@@ -17,13 +17,7 @@ import os, re
 from sklearn.linear_model import LinearRegression
 import utility as ut
 
-"""
-X = np.array([1., 2., 4.])
-y = np.array([4, 6., 9.])
-
-reg = LinearRegression().fit(X, y)
-print('kjhkjh', reg.score(X, y))
-"""
+obs_cov = 0.4
 
 class RateComputer:
 
@@ -58,8 +52,9 @@ class RateComputer:
 
     #@ut.timer
     def fit_line(self, dist, phy_time):
-        y = dist
-        print(y)
+        idx = np.where(dist > 0.)[0]
+        y = np.log(dist[idx])
+        phy_time = phy_time[idx]
         reg = LinearRegression().fit(phy_time, y)
         return reg.coef_, reg.intercept_, reg.score(phy_time, y)
 
@@ -88,7 +83,7 @@ class RateComputer:
         self.find_stop_point()
         dist, phy_time = self.collect_data(self.stop_point)
         self.find_tail_mean()
-        self.coef, self.intercept, self.score = self.fit_line(np.log(dist - self.tail_mean), phy_time.reshape(-1, 1))
+        self.coef, self.intercept, self.score = self.fit_line(dist - self.tail_mean, phy_time.reshape(-1, 1))
     
 
     def plot_scores(self, folder):
@@ -105,12 +100,16 @@ class RateComputer:
         ax = fig.add_subplot(111)
         dist, phy_time = self.collect_data()
         phy_time = phy_time.flatten()
-        print(dist, phy_time)
-        ax.scatter(phy_time, dist, s=5, alpha=0.5)
+        ax.scatter(phy_time, dist, s=5, c='grey', alpha=0.2)
         m, c = self.coef[-1], self.intercept
         t = np.unique(phy_time)
-        ax.scatter(t, self.tail_mean + np.exp(m*t + c), c='deeppink', s=10)
-        plt.savefig('{}/line.png'.format(folder))
+        label = r'${:.2f}\,\exp({:.2f}t) + {:.2f}$'.format(np.exp(c), m, self.tail_mean)
+        ax.plot(t, self.tail_mean + np.exp(m*t + c), c='deeppink', label=label)
+        ax.set_ylabel('sinkhorn divergence')
+        ax.set_xlabel(r'time ($t$)')
+        ax.set_title('obs gap = {:.2f}, obs cov = {:.2f}'.format(self.obs_gaps[0], obs_cov))
+        plt.legend()
+        plt.savefig('{}/rate_obs_gap_{:.2f}.png'.format(folder, self.obs_gaps[0]))
 
 
 dist_folder = 'dists'
@@ -132,14 +131,11 @@ for file in glob.glob('{}/*.csv'.format(avg_dist_folder)):
 
 #print(file_dict)
 
-file_dict = {obs_gap: file_dict_all[obs_gap] for obs_gap in [0.01]}
-avg_file_dict = {obs_gap: avg_file_dict_all[obs_gap] for obs_gap in [0.01]}
 
-rc = RateComputer(file_dict, avg_file_dict)
-rc.fit(200)
-#rc.plot_scores(plot_folder)
-rc.plot_line(plot_folder)
+for gap in file_dict_all:
+    file_dict = {obs_gap: file_dict_all[obs_gap] for obs_gap in [gap]}
+    avg_file_dict = {obs_gap: avg_file_dict_all[obs_gap] for obs_gap in [gap]}
 
-
-
-print(rc.stop_point)
+    rc = RateComputer(file_dict, avg_file_dict)
+    rc.fit(200)
+    rc.plot_line(plot_folder)

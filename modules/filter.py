@@ -264,7 +264,11 @@ class ParticleFilter(Filter):
             hdf5.create_group('/', 'particles')
             #print(hdf5.root.particles)
             hdf5.create_group('/', 'weights')
-            #hdf5.create_group('/', 'analysis_weights')
+            eval_description = {'max_ev': tables.Float64Col(pos = 0), 'trace': tables.Float64Col(pos = 1)}
+            eval = hdf5.create_table('/', 'analysis_evals', eval_description)
+            eval.flush()
+            eval = hdf5.create_table('/', 'resampled_evals', eval_description)
+            eval.flush()
             rs = hdf5.create_table(hdf5.root, 'resampling', self.bool_description)
             rs.flush()
             obs = hdf5.create_table(hdf5.root, 'observation', observation_description)
@@ -299,7 +303,14 @@ class ParticleFilter(Filter):
         self.weights /= self.weights.sum()
         if np.isnan(self.weights[0]) or np.isinf(self.weights[0]):
             self.status = 'failure'
-
+        
+        # record eigenvalues
+        if self.recording:
+            hdf5 = tables.open_file(self.record_path, 'a')
+            evals, _ = np.linalg.eigh(np.cov(self.particles.T))
+            hdf5.root.analysis_evals.append(np.array([evals[-1], evals.sum()], dtype=np.float64))
+            hdf5.root.analysis_evals.flush()
+            hdf5.close()
 
     def systematic_resample(self):
         """
@@ -421,6 +432,10 @@ class ParticleFilter(Filter):
             particles = hdf5.create_table(hdf5.root.particles, 'time_' + str(self.current_time), self.particle_description)
             particles.append(self.particles)
             particles.flush()
+            # record eigenvalues
+            evals, _ = np.linalg.eigh(np.cov(self.particles.T))
+            hdf5.root.resampled_evals.append(np.array([evals[-1], evals.sum()], dtype=np.float64))
+            hdf5.root.resampled_evals.flush()
             # record resampling data
             hdf5.root.resampling.append(np.array([self.resampling_tracker[self.current_time]], dtype=np.bool_))
             hdf5.root.resampling.flush()

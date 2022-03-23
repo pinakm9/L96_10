@@ -12,16 +12,16 @@ import filter as fl
 import numpy as  np
 
 num_seeds = 10
-num_obs_gaps = 10
+num_obs_gaps = 2
 num_experiments = num_seeds * num_obs_gaps
 x0 = np.genfromtxt('../models/trajectory_1_500.csv', dtype=np.float64, delimiter=',')[-1]
 
 model_params = {}
 model_params['x0'] = [x0] * num_experiments
-model_params['ev_time'] = [int(i) for i in np.repeat([10] * num_obs_gaps, num_seeds)]
+model_params['ev_time'] = [int(i) for i in np.repeat([40] * num_obs_gaps, num_seeds)]
 model_params['prior_cov'] = [0.1] * num_experiments
 model_params['shift'] = [0.0] * num_experiments
-model_params['obs_gap'] = np.repeat([0.195 + 0.005 * (2*i+1) for i in range(num_obs_gaps)], num_seeds)
+model_params['obs_gap'] = np.repeat([0.01, 0.03, 0.05, 0.07, 0.09][:2], num_seeds)#np.repeat([0.195 + 0.005 * (2*i+1) for i in range(num_obs_gaps)], num_seeds)
 model_params['obs_cov'] = [0.4 for i in range(num_experiments)]
 
 experiment_params = {}
