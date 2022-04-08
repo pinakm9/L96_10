@@ -12,6 +12,8 @@ import math
 import matplotlib.pyplot as plt
 import hashlib, json
 import config as cf
+from statsmodels.stats.weightstats import DescrStatsW
+
 
 class Model():
     """
@@ -265,7 +267,9 @@ class ParticleFilter(Filter):
             #print(hdf5.root.particles)
             hdf5.create_group('/', 'weights')
             eval_description = {'max_ev': tables.Float64Col(pos = 0), 'trace': tables.Float64Col(pos = 1)}
-            eval = hdf5.create_table('/', 'analysis_evals', eval_description)
+            eval = hdf5.create_table('/', 'predicted_evals', eval_description)
+            eval.flush()
+            eval = hdf5.create_table('/', 'corrected_evals', eval_description)
             eval.flush()
             eval = hdf5.create_table('/', 'resampled_evals', eval_description)
             eval.flush()
@@ -308,8 +312,11 @@ class ParticleFilter(Filter):
         if self.recording:
             hdf5 = tables.open_file(self.record_path, 'a')
             evals, _ = np.linalg.eigh(np.cov(self.particles.T))
-            hdf5.root.analysis_evals.append(np.array([evals[-1], evals.sum()], dtype=np.float64))
-            hdf5.root.analysis_evals.flush()
+            hdf5.root.predicted_evals.append(np.array([evals[-1], evals.sum()], dtype=np.float64))
+            hdf5.root.predicted_evals.flush()
+            evals, _ = np.linalg.eigh(DescrStatsW(self.particles, weights=self.weights).cov) #np.linalg.eigh(np.cov(self.particles.T, aweights=self.weights))
+            hdf5.root.corrected_evals.append(np.array([evals[-1], evals.sum()], dtype=np.float64))
+            hdf5.root.corrected_evals.flush()
             hdf5.close()
 
     def systematic_resample(self):
