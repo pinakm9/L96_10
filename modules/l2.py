@@ -93,3 +93,39 @@ class L2Error:
             plt.savefig('{}/l2_error_{}.png'.format(folder, tag))
         return fig, ax
     #"""
+
+
+class BatchL2:
+    
+    def __init__(self, file_dicts):
+        self.file_dicts = file_dicts 
+
+    def plot(self, folder, tag, obs_cov, ylim, fsize=30, labels=[], linestyles=[]):
+        fig = plt.figure(figsize=(8 * len(self.file_dicts[0]), 8))
+        axs = []
+        for i, obs_gap in enumerate(self.file_dicts[0]):
+            if i == 0:
+                axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1))
+                axs[i].set_ylabel(r'mean ${l_2}/{\sqrt{d}}$', fontsize=fsize)
+            else:
+                axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1, sharey=axs[0], sharex=axs[0]))
+                axs[i].get_yaxis().set_visible(False)
+
+            axs[i].tick_params(axis='both', which='major', labelsize=fsize)
+            axs[i].tick_params(axis='both', which='minor', labelsize=fsize)
+            axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(obs_gap, obs_cov), fontsize=fsize)
+            axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize)
+            if ylim is not None:
+                axs[i].set_ylim(*ylim)
+
+            for j, file_dict in enumerate(self.file_dicts):
+                l2 = L2Error(file_dict[obs_gap], obs_gap)
+                l2.collect_mean_data()
+                axs[i].plot(l2.phy_time, l2.l2_error, c='black', label=labels[j], linestyle=linestyles[j])
+                
+            
+            axs[i].plot(l2.phy_time, np.ones_like(l2.phy_time) * np.sqrt(obs_cov), label='$\sigma$', linestyle='dotted')
+            axs[i].legend(fontsize=fsize, loc='upper right')
+            
+        fig.subplots_adjust(wspace=0, hspace=0)
+        fig.savefig('{}/l2_{}.png'.format(folder, tag), dpi=300, bbox_inches='tight', pad_inches=0)
