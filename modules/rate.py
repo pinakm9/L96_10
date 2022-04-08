@@ -119,3 +119,39 @@ class BatchRate:
                 axs[i].set_ylim(*ylim)
         fig.subplots_adjust(wspace=0, hspace=0)
         fig.savefig('{}/rate_{}.png'.format(folder, tag), dpi=300, bbox_inches='tight', pad_inches=0)
+
+
+
+
+class BatchRate2:
+    
+    def __init__(self, file_dict, obs_gap):
+        self.rcs = [RateCalc(file_dict[obs_cov], obs_gap) for obs_cov in file_dict]
+        self.file_dict = file_dict 
+
+    def plot(self, folder, tag, ylim, fsize=30):
+        fig = plt.figure(figsize=(8 * len(self.file_dict), 8))
+        axs = []
+        for i, obs_cov in enumerate(self.file_dict):
+            self.rcs[i].fit_exp(tail=0.9)
+            if i == 0:
+                axs.append(fig.add_subplot(1, len(self.file_dict), i+1))
+                axs[i].set_ylabel(r'$D_\varepsilon\left(\pi_n(\mu_1), \pi_n(\mu_2)\right)$', fontsize=fsize)
+            else:
+                axs.append(fig.add_subplot(1, len(self.file_dict), i+1, sharey=axs[0], sharex=axs[0]))
+                axs[i].get_yaxis().set_visible(False)
+            axs[i].tick_params(axis='both', which='major', labelsize=fsize)
+            axs[i].tick_params(axis='both', which='minor', labelsize=fsize)
+            dist, phy_time = self.rcs[i].collect_data()
+            axs[i].scatter(phy_time, dist, s=10, c='grey', alpha=0.3)
+            label = r'${:.2f}\,\exp({:.2f}t) + {:.2f}$'.format(*self.rcs[i].popt)
+            axs[i].plot(self.rcs[i].phy_time, self.rcs[i].f(self.rcs[i].phy_time), c='black', label=label)
+            axs[i].plot(self.rcs[i].phy_time, self.rcs[i].dist, c='black', label=r'mean $D_\varepsilon$', linestyle='dashed')
+            axs[i].text(0.9, 8.0, r'$R^2$ for fit = {:.2f}'.format(self.rcs[i].r_squared), fontsize=fsize)
+            axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize)
+            axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(self.rcs[i].obs_gap, obs_cov), fontsize=fsize)
+            axs[i].legend(fontsize=fsize-0, loc='upper right')
+            if ylim is not None:
+                axs[i].set_ylim(*ylim)
+        fig.subplots_adjust(wspace=0, hspace=0)
+        fig.savefig('{}/rate_{}.png'.format(folder, tag), dpi=300, bbox_inches='tight', pad_inches=0)
