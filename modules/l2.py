@@ -4,6 +4,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tables
 
+
+# plt.rcParams.update({
+#     'text.usetex': True,
+#     'text.latex.preamble': r'\usepackage{amsfonts}'
+# })
+
+
+
 class L2Error:
     
     def __init__(self, files, obs_gap) -> None:
@@ -106,14 +114,14 @@ class BatchL2:
         for i, obs_gap in enumerate(self.file_dicts[0]):
             if i == 0:
                 axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1))
-                axs[i].set_ylabel(r'mean ${l_2}/{\sqrt{d}}$', fontsize=fsize)
+                axs[i].set_ylabel(r'$\mathbb{E}[e_n]$', fontsize=fsize)
             else:
                 axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1, sharey=axs[0], sharex=axs[0]))
                 axs[i].get_yaxis().set_visible(False)
 
             axs[i].tick_params(axis='both', which='major', labelsize=fsize)
             axs[i].tick_params(axis='both', which='minor', labelsize=fsize)
-            axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(obs_gap, obs_cov), fontsize=fsize)
+            #axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(obs_gap, obs_cov), fontsize=fsize)
             axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize)
             if ylim is not None:
                 axs[i].set_ylim(*ylim)
@@ -143,14 +151,14 @@ class BatchL22:
         for i, obs_cov in enumerate(self.file_dicts[0]):
             if i == 0:
                 axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1))
-                axs[i].set_ylabel(r'mean ${l_2}/{\sqrt{d}}$', fontsize=fsize)
+                axs[i].set_ylabel(r'$\mathbb{E}[e_n]$', fontsize=fsize)
             else:
                 axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1, sharey=axs[0], sharex=axs[0]))
                 axs[i].get_yaxis().set_visible(False)
 
             axs[i].tick_params(axis='both', which='major', labelsize=fsize)
             axs[i].tick_params(axis='both', which='minor', labelsize=fsize)
-            axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(self.obs_gap, obs_cov), fontsize=fsize)
+            #axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(self.obs_gap, obs_cov), fontsize=fsize)
             axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize)
             if ylim is not None:
                 axs[i].set_ylim(*ylim)

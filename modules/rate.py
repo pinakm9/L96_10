@@ -3,6 +3,13 @@ import scipy
 import pandas as pd 
 import matplotlib.pyplot as plt
 
+
+# plt.rcParams.update({
+#     'text.usetex': True,
+#     'text.latex.preamble': r'\usepackage{amsfonts}'
+# })
+
+
 class RateCalc:
     
     def __init__(self, files, obs_gap) -> None:
@@ -76,7 +83,7 @@ class RateCalc:
         label = r'${:.2f}\,\exp({:.2f}t) + {:.2f}, R^2 = {:.2f}$'.format(*self.popt, self.r_squared)
         ax.plot(self.phy_time, self.f(self.phy_time), c='deeppink', label=label)
         ax.plot(self.phy_time, self.dist, c='black', label=r'mean $D_\varepsilon$', linestyle='dashed')
-        ax.set_ylabel(r'$D_\varepsilon\left(\pi_n(\mu_1), \pi_n(\mu_2)\right)$', fontsize=20)
+        ax.set_ylabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=20)
         ax.set_xlabel(r'time ($t=ng$)', fontsize=20)
         ax.set_title(r'g = {:.2f}, $\sigma$ = {:.2f}'.format(self.obs_gap, obs_cov), fontsize=20)
         if ylim is not None:
@@ -103,7 +110,7 @@ class BatchRate:
                 file.write('{0:.2e} $\pm$ {3:.2e} & {1:.2e} $\pm$ {4:.2e} & {2:.2e} $\pm$ {5:.2e}\\\\\n\\hline\n'.format(*self.rcs[i].popt, *(1.96 * np.diag(self.rcs[i].pcov))))
                 if i == 0:
                     axs.append(fig.add_subplot(1, len(self.file_dict), i+1))
-                    axs[i].set_ylabel(r'$D_\varepsilon\left(\pi_n(\mu_1), \pi_n(\mu_2)\right)$', fontsize=fsize)
+                    axs[i].set_ylabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize)
                 else:
                     axs.append(fig.add_subplot(1, len(self.file_dict), i+1, sharey=axs[0], sharex=axs[0]))
                     axs[i].get_yaxis().set_visible(False)
@@ -141,7 +148,7 @@ class BatchRate2:
                 file.write('{0:.2e} $\pm$ {3:.2e} & {1:.2e} $\pm$ {4:.2e} & {2:.2e} $\pm$ {5:.2e}\\\\\n\\hline\n'.format(*self.rcs[i].popt, *(1.96 * np.diag(self.rcs[i].pcov))))
                 if i == 0:
                     axs.append(fig.add_subplot(1, len(self.file_dict), i+1))
-                    axs[i].set_ylabel(r'$D_\varepsilon\left(\pi_n(\mu_1), \pi_n(\mu_2)\right)$', fontsize=fsize)
+                    axs[i].set_ylabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize)
                 else:
                     axs.append(fig.add_subplot(1, len(self.file_dict), i+1, sharey=axs[0], sharex=axs[0]))
                     axs[i].get_yaxis().set_visible(False)
