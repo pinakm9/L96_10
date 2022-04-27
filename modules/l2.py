@@ -19,6 +19,7 @@ class L2Error:
         self.obs_gap = obs_gap
         h5 = tables.open_file(files[0], mode='r')
         self.dim = np.array(h5.root.particles.time_0.read().tolist()).shape[-1]
+        print('System dimension found to be {}'.format(self.dim))
         h5.close()
 
 
@@ -132,7 +133,7 @@ class BatchL2:
                 axs[i].plot(l2.phy_time, l2.l2_error, c='black', label=labels[j], linestyle=linestyles[j])
                 
             
-            axs[i].plot(l2.phy_time, np.ones_like(l2.phy_time) * np.sqrt(obs_cov), label='$\sigma$', linestyle='dotted')
+            axs[i].plot(l2.phy_time, np.ones_like(l2.phy_time) * np.sqrt(obs_cov), label='$\sigma$', linestyle='dotted', c='grey')
             axs[i].legend(fontsize=fsize, loc='upper right')
             
         fig.subplots_adjust(wspace=0, hspace=0)
@@ -169,7 +170,7 @@ class BatchL22:
                 axs[i].plot(l2.phy_time, l2.l2_error, c='black', label=labels[j], linestyle=linestyles[j])
                 
             
-            axs[i].plot(l2.phy_time, np.ones_like(l2.phy_time) * np.sqrt(obs_cov), label='$\sigma$', linestyle='dotted')
+            axs[i].plot(l2.phy_time, np.ones_like(l2.phy_time) * np.sqrt(obs_cov), label='$\sigma$', linestyle='dotted', c='grey')
             axs[i].legend(fontsize=fsize, loc='upper right')
             
         fig.subplots_adjust(wspace=0, hspace=0)

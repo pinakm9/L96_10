@@ -53,7 +53,7 @@ del dist_dict_all[0.05]
 del error_dict_all_1[0.05]
 del error_dict_all_2[0.05]
 
-# rate.BatchRate(dist_dict_all).plot(plot_folder, tag='obs_gap_all', obs_cov=obs_cov, ylim=(0.5, 12.0), fsize=25)
+#rate.BatchRate(dist_dict_all).plot(plot_folder, tag='obs_gap_all', obs_cov=obs_cov, ylim=(0.5, 12.0), fsize=25)
 l2.BatchL2([error_dict_all_1, error_dict_all_2])\
     .plot(plot_folder, tag='obs_gap_all', obs_cov=obs_cov, ylim=(0.0, 4.0), fsize=25, labels=['unbiased', 'biased'], linestyles=['solid', 'dashed'])
 # trace.BatchTr([error_dict_all_1, error_dict_all_2])\
