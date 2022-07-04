@@ -100,7 +100,7 @@ class BatchRate:
         self.rcs = [RateCalc(file_dict[obs_gap], obs_gap) for obs_gap in file_dict]
         self.file_dict = file_dict 
 
-    def plot(self, folder, tag, obs_cov, ylim, fsize=30):
+    def plot(self, folder, tag, obs_cov, ylim, fsize=30, linewidth=5):
         fig = plt.figure(figsize=(8 * len(self.file_dict), 8))
         axs = []
        
@@ -110,19 +110,20 @@ class BatchRate:
                 file.write('{0:.6f} $\pm$ {3:.6f} & {1:.6f} $\pm$ {4:.6f} & {2:.6f} $\pm$ {5:.6f}\\\\\n\\hline\n'.format(*self.rcs[i].popt, *(1.96 * np.diag(self.rcs[i].pcov))))
                 if i == 0:
                     axs.append(fig.add_subplot(1, len(self.file_dict), i+1))
-                    axs[i].set_ylabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize)
+                    axs[i].set_ylabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize+10)
+                    axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize+10)
                 else:
                     axs.append(fig.add_subplot(1, len(self.file_dict), i+1, sharey=axs[0], sharex=axs[0]))
                     axs[i].get_yaxis().set_visible(False)
                 axs[i].tick_params(axis='both', which='major', labelsize=fsize)
                 axs[i].tick_params(axis='both', which='minor', labelsize=fsize)
                 dist, phy_time = self.rcs[i].collect_data()
-                axs[i].scatter(phy_time, dist, s=10, c='grey', alpha=0.3)
-                label = r'${:.2f}\,\exp(-{:.2f}t) + {:.2f}$'.format(*self.rcs[i].popt)
-                axs[i].plot(self.rcs[i].phy_time, self.rcs[i].f(self.rcs[i].phy_time), c='black', label=label)
-                axs[i].plot(self.rcs[i].phy_time, self.rcs[i].dist, c='black', label=r'mean $D_\varepsilon$', linestyle='dashed')
-                axs[i].text(0.9, 8.0, r'$R^2$ for fit = {:.2f}'.format(self.rcs[i].r_squared), fontsize=fsize)
-                axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize)
+                axs[i].scatter(phy_time, dist, s=30, c='grey', alpha=0.3)
+                label = r'$\lambda = {:.2f}$'.format(self.rcs[i].popt[1])
+                axs[i].plot(self.rcs[i].phy_time, self.rcs[i].f(self.rcs[i].phy_time), c='black', label=label, linewidth=linewidth)
+                axs[i].plot(self.rcs[i].phy_time, self.rcs[i].dist, c='black', label=r'mean $D_\varepsilon$', linestyle='dashed',linewidth=linewidth)
+                axs[i].text(1.5, 5.0, r'$R^2$ = {:.2f}'.format(self.rcs[i].r_squared), fontsize=fsize)
+               
                 axs[i].set_title(r'$g = {:.2f},\,\sigma^2= {:.2f}$'.format(obs_gap, obs_cov), fontsize=fsize)
                 axs[i].legend(fontsize=fsize-0, loc='upper right')
                 if ylim is not None:
@@ -139,7 +140,7 @@ class BatchRate2:
         self.rcs = [RateCalc(file_dict[obs_cov], obs_gap) for obs_cov in file_dict]
         self.file_dict = file_dict 
 
-    def plot(self, folder, tag, ylim, fsize=30):
+    def plot(self, folder, tag, ylim, fsize=30, linewidth=5):
         fig = plt.figure(figsize=(8 * len(self.file_dict), 8))
         axs = []
         with open('{}/p_rate_{}.txt'.format(folder, tag), 'w') as file:
@@ -148,19 +149,20 @@ class BatchRate2:
                 file.write('{0:.6f} $\pm$ {3:.6f} & {1:.6f} $\pm$ {4:.6f} & {2:.6f} $\pm$ {5:.6f}\\\\\n\\hline\n'.format(*self.rcs[i].popt, *(1.96 * np.diag(self.rcs[i].pcov))))
                 if i == 0:
                     axs.append(fig.add_subplot(1, len(self.file_dict), i+1))
-                    axs[i].set_ylabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize)
+                    axs[i].set_ylabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize+10)
+                    axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize+10)
                 else:
                     axs.append(fig.add_subplot(1, len(self.file_dict), i+1, sharey=axs[0], sharex=axs[0]))
                     axs[i].get_yaxis().set_visible(False)
                 axs[i].tick_params(axis='both', which='major', labelsize=fsize)
                 axs[i].tick_params(axis='both', which='minor', labelsize=fsize)
                 dist, phy_time = self.rcs[i].collect_data()
-                axs[i].scatter(phy_time, dist, s=10, c='grey', alpha=0.3)
-                label = r'${:.2f}\,\exp(-{:.2f}t) + {:.2f}$'.format(*self.rcs[i].popt)
-                axs[i].plot(self.rcs[i].phy_time, self.rcs[i].f(self.rcs[i].phy_time), c='black', label=label)
-                axs[i].plot(self.rcs[i].phy_time, self.rcs[i].dist, c='black', label=r'mean $D_\varepsilon$', linestyle='dashed')
-                axs[i].text(0.9, 8.0, r'$R^2$ for fit = {:.2f}'.format(self.rcs[i].r_squared), fontsize=fsize)
-                axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize)
+                axs[i].scatter(phy_time, dist, s=30, c='grey', alpha=0.3)
+                label = r'$\lambda = {:.2f}$'.format(self.rcs[i].popt[1])
+                axs[i].plot(self.rcs[i].phy_time, self.rcs[i].f(self.rcs[i].phy_time), c='black', label=label, linewidth=linewidth)
+                axs[i].plot(self.rcs[i].phy_time, self.rcs[i].dist, c='black', label=r'mean $D_\varepsilon$', linestyle='dashed', linewidth=linewidth)
+                axs[i].text(2.0, 5.0, r'$R^2$ = {:.2f}'.format(self.rcs[i].r_squared), fontsize=fsize)
+               
                 axs[i].set_title(r'$g = {:.2f},\,\sigma^2= {:.2f}$'.format(self.rcs[i].obs_gap, obs_cov), fontsize=fsize)
                 axs[i].legend(fontsize=fsize-0, loc='upper right')
                 if ylim is not None:

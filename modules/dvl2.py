@@ -137,7 +137,8 @@ class BatchDvL2:
                 file.write('{0:.2e} $\pm$ {2:.2e} & {1:.2e} $\pm$ {3:.2e}\\\\\n\\hline\n'.format(*self.dvl2s[i].popt, *(1.96 * np.diag(self.dvl2s[i].pcov))))
                 if i == 0:
                     axs.append(fig.add_subplot(1, len(self.dist_file_dict), i+1))
-                    axs[i].set_ylabel(r'$\mathbb{E}[e_n(\mu_b)]$', fontsize=fsize)
+                    axs[i].set_ylabel(r'$\mathbb{E}[e_n(\mu_b)]$', fontsize=fsize+10)
+                    axs[i].set_xlabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize+10)
                 else:
                     axs.append(fig.add_subplot(1, len(self.dist_file_dict), i+1, sharey=axs[0], sharex=axs[0]))
                     axs[i].get_yaxis().set_visible(False)
@@ -148,10 +149,10 @@ class BatchDvL2:
                 label = r'${:.2f}D_\varepsilon {} {:.2f}$'.format(self.dvl2s[i].popt[0], '' if self.dvl2s[i].popt[1] < 0 else '+', self.dvl2s[i].popt[1])
                 axs[i].plot(self.dvl2s[i].dist, self.dvl2s[i].f(self.dvl2s[i].dist), c='black', label=label)
                 
-                axs[i].set_xlabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize)
+                
                 #axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(obs_gap, obs_cov), fontsize=fsize)
-                axs[i].text(6.0, 1.0, r'Correlation = {:.2f}'.format(pearsonr(self.dvl2s[i].dist, self.dvl2s[i].l2_error)[0]), fontsize=fsize)
-                axs[i].text(6.0, 1.2, r'$R^2$ for fit = {:.2f}'.format(self.dvl2s[i].r_squared), fontsize=fsize)
+                axs[i].text(6.0, 1.0, r'Corr = {:.2f}'.format(pearsonr(self.dvl2s[i].dist, self.dvl2s[i].l2_error)[0]), fontsize=fsize)
+                axs[i].text(6.0, 1.5, r'$R^2$ = {:.2f}'.format(self.dvl2s[i].r_squared), fontsize=fsize)
                 axs[i].legend(fontsize=fsize-0, loc='upper left')
                 if ylim is not None:
                     axs[i].set_ylim(*ylim)
@@ -180,7 +181,8 @@ class BatchDvL22:
                 file.write('{0:.2e} $\pm$ {2:.2e} & {1:.2e} $\pm$ {3:.2e}\\\\\n\\hline\n'.format(*self.dvl2s[i].popt, *(1.96 * np.diag(self.dvl2s[i].pcov))))
                 if i == 0:
                     axs.append(fig.add_subplot(1, len(self.dist_file_dict), i+1))
-                    axs[i].set_ylabel(r'$\mathbb{E}[e_n(\mu_b)]$', fontsize=fsize)
+                    axs[i].set_ylabel(r'$\mathbb{E}[e_n(\mu_b)]$', fontsize=fsize+10)
+                    axs[i].set_xlabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize+10)
                 else:
                     axs.append(fig.add_subplot(1, len(self.dist_file_dict), i+1, sharey=axs[0], sharex=axs[0]))
                     axs[i].get_yaxis().set_visible(False)
@@ -191,10 +193,10 @@ class BatchDvL22:
                 label = r'${:.2f}D_\varepsilon {} {:.2f}$'.format(self.dvl2s[i].popt[0], '' if self.dvl2s[i].popt[1] < 0 else '+', self.dvl2s[i].popt[1])
                 axs[i].plot(self.dvl2s[i].dist, self.dvl2s[i].f(self.dvl2s[i].dist), c='black', label=label)
                 
-                axs[i].set_xlabel(r'$\mathbb{E}[D_\varepsilon\left(\pi_n(\mu_0), \pi_n(\mu_b)\right)]$', fontsize=fsize)
+                
                #axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(self.obs_gap, obs_cov), fontsize=fsize)
-                axs[i].text(6.0, 1.0, r'Correlation = {:.2f}'.format(pearsonr(self.dvl2s[i].dist, self.dvl2s[i].l2_error)[0]), fontsize=fsize)
-                axs[i].text(6.0, 1.2, r'$R^2$ for fit = {:.2f}'.format(self.dvl2s[i].r_squared), fontsize=fsize)
+                axs[i].text(6.0, 1.0, r'Corr = {:.2f}'.format(pearsonr(self.dvl2s[i].dist, self.dvl2s[i].l2_error)[0]), fontsize=fsize)
+                axs[i].text(6.0, 1.5, r'$R^2$ = {:.2f}'.format(self.dvl2s[i].r_squared), fontsize=fsize)
                 axs[i].legend(fontsize=fsize-0, loc='upper left')
                 if ylim is not None:
                     axs[i].set_ylim(*ylim)
