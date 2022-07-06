@@ -62,6 +62,20 @@ class L2Error:
             self.tail_mean += np.mean(d[t:])
         self.tail_mean /= len(self.files)
         self.l2_error, self.phy_time = l2_error / len(self.files), phy_time / len(self.files)
+
+    
+    def collect_squared_mean_data(self, k=None, tail=0.7):
+        self.tail_mean = 0.
+      
+        for i, file in enumerate(self.files):
+            d, t =  self.read(file, k)
+            if i == 0:
+                l2_error, phy_time = d**2, t
+            else:
+                l2_error += d**2
+                phy_time += t
+            t = int(len(d) * tail)
+        self.l2_error, self.phy_time = l2_error / len(self.files), phy_time / len(self.files)
     
 
     def fit_exp(self, tail=0.7):
@@ -91,7 +105,7 @@ class L2Error:
         a, b, c = self.popt
         label = r'${:.2f}\,\exp({:.2f}t) + {:.2f}$'.format(a, b, c)#self.tail_mean)
         #ax.plot(self.phy_time, self.f(self.phy_time), c='deeppink', label=label)
-        ax.plot(self.phy_time, np.ones_like(self.phy_time) * np.sqrt(obs_cov), label='$\sigma$')
+        ax.plot(self.phy_time, np.ones_like(self.phy_time) * obs_cov, label='$\sigma$')
         ax.plot(self.phy_time, self.l2_error, c='black', label=r'mean error', linestyle='dashed')
         ax.set_ylabel(r'$\frac{\rm error}{\sqrt{\rm dimension}}$', fontsize=20)
         ax.set_xlabel(r'time ($t=ng$)', fontsize=20)
@@ -115,7 +129,7 @@ class BatchL2:
         for i, obs_gap in enumerate(self.file_dicts[0]):
             if i == 0:
                 axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1))
-                axs[i].set_ylabel(r'$\mathbb{E}[e_n]$', fontsize=fsize+10)
+                axs[i].set_ylabel(r'$\mathbb{E}[e_n^2]$', fontsize=fsize+10)
                 axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize+10)
             else:
                 axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1, sharey=axs[0], sharex=axs[0]))
@@ -130,12 +144,13 @@ class BatchL2:
 
             for j, file_dict in enumerate(self.file_dicts):
                 l2 = L2Error(file_dict[obs_gap], obs_gap)
-                l2.collect_mean_data()
+                l2.collect_squared_mean_data()
                 axs[i].plot(l2.phy_time, l2.l2_error, c='black', label=labels[j], linestyle=linestyles[j], linewidth=linewidth)
                 
             
-            axs[i].plot(l2.phy_time, np.ones_like(l2.phy_time) * np.sqrt(obs_cov), label='$\sigma$', linestyle='dotted', c='black', linewidth=linewidth)
-            axs[i].legend(fontsize=fsize, loc='upper right')
+            axs[i].plot(l2.phy_time, np.ones_like(l2.phy_time) * obs_cov, label='$\sigma^2$', linestyle='dotted', c='black', linewidth=linewidth)
+            if i == len(self.file_dicts[0]) - 1:
+                axs[i].legend(fontsize=fsize, loc='upper right')
             
         fig.subplots_adjust(wspace=0, hspace=0)
         fig.savefig('{}/l2_{}.png'.format(folder, tag), dpi=300, bbox_inches='tight', pad_inches=0)
@@ -153,7 +168,7 @@ class BatchL22:
         for i, obs_cov in enumerate(self.file_dicts[0]):
             if i == 0:
                 axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1))
-                axs[i].set_ylabel(r'$\mathbb{E}[e_n]$', fontsize=fsize+10)
+                axs[i].set_ylabel(r'$\mathbb{E}[e_n^2]$', fontsize=fsize+10)
                 axs[i].set_xlabel(r'time ($t=ng$)', fontsize=fsize+10)
             else:
                 axs.append(fig.add_subplot(1, len(self.file_dicts[0]), i+1, sharey=axs[0], sharex=axs[0]))
@@ -168,12 +183,13 @@ class BatchL22:
 
             for j, file_dict in enumerate(self.file_dicts):
                 l2 = L2Error(file_dict[obs_cov], self.obs_gap)
-                l2.collect_mean_data()
+                l2.collect_squared_mean_data()
                 axs[i].plot(l2.phy_time, l2.l2_error, c='black', label=labels[j], linestyle=linestyles[j], linewidth=linewidth)
                 
             
-            axs[i].plot(l2.phy_time, np.ones_like(l2.phy_time) * np.sqrt(obs_cov), label='$\sigma$', linestyle='dotted', c='black', linewidth=linewidth)
-            axs[i].legend(fontsize=fsize, loc='upper right')
+            axs[i].plot(l2.phy_time, np.ones_like(l2.phy_time) * obs_cov, label='$\sigma^2$', linestyle='dotted', c='black', linewidth=linewidth)
+            if i == len(self.file_dicts[0]) - 1:
+                axs[i].legend(fontsize=fsize, loc='upper right')
             
         fig.subplots_adjust(wspace=0, hspace=0)
         fig.savefig('{}/l2_{}.png'.format(folder, tag), dpi=300, bbox_inches='tight', pad_inches=0)

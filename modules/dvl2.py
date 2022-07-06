@@ -128,7 +128,7 @@ class BatchDvL2:
         self.dist_file_dict = dist_file_dict
         self.error_file_dict = error_file_dict 
 
-    def plot(self, folder, tag, obs_cov, ylim, xlim, fsize=30):
+    def plot(self, folder, tag, obs_cov, ylim, xlim, fsize=30, linewidth=5.):
         fig = plt.figure(figsize=(8 * len(self.dist_file_dict), 8))
         axs = []
         with open('{}/p_dvl2_{}.txt'.format(folder, tag), 'w') as file:
@@ -145,9 +145,9 @@ class BatchDvL2:
                 axs[i].tick_params(axis='both', which='major', labelsize=fsize)
                 axs[i].tick_params(axis='both', which='minor', labelsize=fsize)
                 
-                axs[i].scatter(self.dvl2s[i].dist, self.dvl2s[i].l2_error, c='black', s=10)
+                axs[i].scatter(self.dvl2s[i].dist, self.dvl2s[i].l2_error, c='black', s=100)
                 label = r'${:.2f}D_\varepsilon {} {:.2f}$'.format(self.dvl2s[i].popt[0], '' if self.dvl2s[i].popt[1] < 0 else '+', self.dvl2s[i].popt[1])
-                axs[i].plot(self.dvl2s[i].dist, self.dvl2s[i].f(self.dvl2s[i].dist), c='black', label=label)
+                axs[i].plot(self.dvl2s[i].dist, self.dvl2s[i].f(self.dvl2s[i].dist), c='darkgrey', label=label, linewidth=linewidth)
                 
                 
                 #axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(obs_gap, obs_cov), fontsize=fsize)
@@ -172,7 +172,7 @@ class BatchDvL22:
         self.error_file_dict = error_file_dict
         self.obs_gap = obs_gap
 
-    def plot(self, folder, tag, ylim, xlim, fsize=30):
+    def plot(self, folder, tag, ylim, xlim, fsize=30, linewidth=5.):
         fig = plt.figure(figsize=(8 * len(self.dist_file_dict), 8))
         axs = []
         with open('{}/p_dvl2_{}.txt'.format(folder, tag), 'w') as file:
@@ -189,9 +189,9 @@ class BatchDvL22:
                 axs[i].tick_params(axis='both', which='major', labelsize=fsize)
                 axs[i].tick_params(axis='both', which='minor', labelsize=fsize)
                 
-                axs[i].scatter(self.dvl2s[i].dist, self.dvl2s[i].l2_error, c='black', s=10)
+                axs[i].scatter(self.dvl2s[i].dist, self.dvl2s[i].l2_error, c='black', s=100)
                 label = r'${:.2f}D_\varepsilon {} {:.2f}$'.format(self.dvl2s[i].popt[0], '' if self.dvl2s[i].popt[1] < 0 else '+', self.dvl2s[i].popt[1])
-                axs[i].plot(self.dvl2s[i].dist, self.dvl2s[i].f(self.dvl2s[i].dist), c='black', label=label)
+                axs[i].plot(self.dvl2s[i].dist, self.dvl2s[i].f(self.dvl2s[i].dist), c='darkgrey', label=label, linewidth=linewidth)
                 
                 
                #axs[i].set_title(r'$g = {:.2f},\,\sigma= {:.2f}$'.format(self.obs_gap, obs_cov), fontsize=fsize)
