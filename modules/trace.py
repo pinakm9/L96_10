@@ -15,7 +15,7 @@ class Trace:
         print('System dimension found to be {}'.format(self.dim))
         h5.close() 
 
-    @ut.timer
+    #@ut.timer
     def read(self, file, k=None):
         h5 = tables.open_file(file, mode='r')
         T = len(h5.root.observation.read().tolist()) 
@@ -179,10 +179,13 @@ class BatchTr2:
             for j, file_dict in enumerate(self.file_dicts):
                 trace = Trace(file_dict[obs_cov], self.obs_gap)
                 trace.collect_squared_mean_data()
-                axs[i].plot(trace.phy_time, trace.trace**2, c='black', label=labels[j], linestyle=linestyles[j], linewidth=linewidth)
+                print("max trace = {:.4f},{:.4f}".format(max(trace.trace), max(np.sqrt(trace.trace))))
+                axs[i].plot(trace.phy_time, trace.trace, c='black', label=labels[j], linestyle=linestyles[j], linewidth=linewidth)
             axs[i].plot(trace.phy_time, np.ones_like(trace.phy_time) * obs_cov, label='$\sigma^2$', linestyle='dotted', c='black', linewidth=linewidth)    
             if i == len(self.file_dicts[0]) - 1:
                 axs[i].legend(fontsize=fsize, loc='upper right')
             
+            
         fig.subplots_adjust(wspace=0, hspace=0)
         fig.savefig('{}/trace_{}.png'.format(folder, tag), dpi=300, bbox_inches='tight', pad_inches=0)
+        

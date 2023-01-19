@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import os, re
 from sklearn.linear_model import LinearRegression
 import utility as ut
-import rate, l2, trace, dvl2
+import rate, l2, trace, dvl2, dvs, dvrmse
 
 obs_gap = 0.05
 
@@ -48,9 +48,11 @@ for folder in glob.glob('{}/*'.format(error_folder)):
     else:
         error_dict_all_2[obs_cov].append(file)
 
-rate.BatchRate2(dist_dict_all, obs_gap).plot(plot_folder, tag='obs_cov_all', ylim=(0.5, 12.0), fsize=40, linewidth=5)
-l2.BatchL22([error_dict_all_1, error_dict_all_2], obs_gap)\
-   .plot(plot_folder, tag='obs_cov_all', ylim=(0.0, 4.0), fsize=40, labels=['unbiased', 'biased'], linestyles=['solid', 'dashed'], linewidth=5)
-trace.BatchTr2([error_dict_all_1, error_dict_all_2], obs_gap)\
-    .plot(plot_folder, tag='obs_cov_all', ylim=(0.0, 4.0), fsize=40, labels=[r'unbiased', 'biased'], linestyles=['solid', 'dashed'], linewidth=5)
-dvl2.BatchDvL22(dist_dict_all, error_dict_all_2, obs_gap).plot(plot_folder, tag='obs_cov_all', ylim=(0.2, 4.0), xlim=(1.5, 11.5), fsize=40, linewidth=5)
+# rate.BatchRate2(dist_dict_all, obs_gap).plot(plot_folder, tag='obs_cov_all', ylim=(0.5, 12.0), fsize=40, linewidth=5)
+# l2.BatchL22([error_dict_all_1, error_dict_all_2], obs_gap)\
+#    .plot(plot_folder, tag='obs_cov_all', ylim=(0.0, 4.0), fsize=40, labels=['unbiased', 'biased'], linestyles=['solid', 'dashed'], linewidth=5)
+# trace.BatchTr2([error_dict_all_1, error_dict_all_2], obs_gap)\
+#     .plot(plot_folder, tag='obs_cov_all', ylim=(0.0, 4.0), fsize=40, labels=[r'unbiased', 'biased'], linestyles=['solid', 'dashed'], linewidth=5)
+# dvl2.BatchDvL22(dist_dict_all, error_dict_all_2, obs_gap).plot(plot_folder, tag='obs_cov_all', ylim=(0.2, 4.0), xlim=(1.5, 11.5), fsize=40, linewidth=5)
+# dvs.BatchDvs2(dist_dict_all, error_dict_all_2, obs_gap).plot(plot_folder, tag='obs_cov_all', ylim=(0.2, 2.0), xlim=(1.5, 11.5), fsize=40, linewidth=5)
+dvrmse.BatchDvL22(dist_dict_all, error_dict_all_2, obs_gap).plot(plot_folder, tag='obs_cov_all', ylim=(0.2, 4.0), xlim=(1.5, 11.5), fsize=40, linewidth=5)
