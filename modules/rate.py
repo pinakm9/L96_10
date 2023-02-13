@@ -100,7 +100,7 @@ class BatchRate:
         self.rcs = [RateCalc(file_dict[obs_gap], obs_gap) for obs_gap in file_dict]
         self.file_dict = file_dict 
 
-    def plot(self, folder, tag, obs_cov, ylim, fsize=30, linewidth=5):
+    def plot(self, folder, tag, obs_cov, ylim, fsize=30, linewidth=5, scatter=True):
         fig = plt.figure(figsize=(8 * len(self.file_dict), 8))
         axs = []
        
@@ -118,7 +118,8 @@ class BatchRate:
                 axs[i].tick_params(axis='both', which='major', labelsize=fsize)
                 axs[i].tick_params(axis='both', which='minor', labelsize=fsize)
                 dist, phy_time = self.rcs[i].collect_data()
-                axs[i].scatter(phy_time, dist, s=30, c='grey', alpha=0.3)
+                if scatter:
+                    axs[i].scatter(phy_time, dist, s=30, c='grey', alpha=0.3)
                 label = r'$\lambda = {:.2f}$'.format(self.rcs[i].popt[1])
                 axs[i].plot(self.rcs[i].phy_time, self.rcs[i].f(self.rcs[i].phy_time), c='black', label=label, linewidth=linewidth)
                 axs[i].plot(self.rcs[i].phy_time, self.rcs[i].dist, c='black', label=r'mean $D_\varepsilon$', linestyle='dashed',linewidth=linewidth)
